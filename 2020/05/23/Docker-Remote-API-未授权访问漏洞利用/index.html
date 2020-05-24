@@ -181,6 +181,12 @@
         <div class="py-5" id="board">
           <div class="post-content mx-auto" id="post">
             
+              <p class="note note-info">
+                
+                  本文最后更新于：2020年5月24日 晚上
+                
+              </p>
+            
             <article class="markdown-body">
               <h4 id="漏洞简介及危害"><a href="#漏洞简介及危害" class="headerlink" title="漏洞简介及危害"></a>漏洞简介及危害</h4><p>Docker是一个开源的应用容器引擎，让开发者可以打包他们的应用以及依赖包到一个可移植的容器中，然后发布到任何流行的LINUX机器上，也可以实现虚拟化。 Docker swarm 是一个将docker集群变成单一虚拟的docker host工具，使用标准的Docker API，能够方便docker集群的管理和扩展，由docker官方提供。</p>
 <p>Docker Remote API 是一个取代远程命令行界面（rcli）的REST API。Docker Remote API如配置不当可导致未授权访问，攻击者利用 docker client 或者 http 直接请求就可以访问这个 API，可能导致敏感信息泄露，黑客也可以删除Docker上的数据。 攻击者可进一步利用Docker自身特性，直接访问宿主机上的敏感信息，或对敏感文件进行修改，最终完全控制服务器。</p>
