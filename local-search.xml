@@ -11,6 +11,12 @@
     <content type="html"><![CDATA[<p>##《趣谈网络协议》学习总结：1-4讲</p><h3 id="总结-思考："><a href="#总结-思考：" class="headerlink" title="总结/思考："></a>总结/思考：</h3><p>第四讲中关于DHCP的具体实现过程讲的比较抽象，于是上网google了一下具体的流程</p><h4 id="DHCP的实现"><a href="#DHCP的实现" class="headerlink" title="DHCP的实现"></a>DHCP的实现</h4><p>DHCP实现大致分为4步<br>第一步：Client端在局域网内发起一个DHCP　Discover包，目的是想发现能够给它提供IP的DHCP Server。<br>数据包内容：Client端使用IP地址0.0.0.0发送一个目的IP地址位255.255.255.255的广播包，使用的协议为UDP协议。</p><p>第二步：可用的DHCP Server接收到Discover包之后，通过发送DHCP Offer包给予Client端应答，意在告诉Client端它可以提供IP地址。<br>数据包内容：<br>（1）DHCP服务器仍然使用广播地址作为目的地址，因为此时请求分配IP的Client并没有自己ip,而可能有多个Client在使用0.0.0.0这个IP作为源IP向DHCP服务器发出IP分配请求，DHCP也不能使用0.0.0.0这个IP作为目的IP地址，于是依然采用广播的方式，告诉正在请求的Client们，这是一台可以使用的DHCP服务器。<br>（2）DHCP服务器提供了一个可用的IP,在数据包的Your (client) IP Address字段可以看到DHCP服务器提供的可用IP。<br>（3）除此之外，如图中红色矩形框的内容所示，服务器还发送了子网掩码，路由器，DNS，域名，IP地址租用期等信息。</p><p>第三步：Client端接收到Offer包之后，发送DHCP Request包请求分配IP。<br>数据包内容：当Client收到了DHCP Offer包以后（如果有多个可用的DHCP服务器，那么可能会收到多个DHCP Offer包），确认有可以和它交互的DHCP服务器存在，于是Client发送Request数据包，请求分配IP。<br>此时的源IP和目的IP依然是0.0.0.0和255.255.255.255。包中包含客户端的MAC地址、接受的租约中的IP地址、提供此租约的DHCP服务器地址等）。告诉所有DHCP服务器它将接受哪一台服务器（一般是最先到达的server）提供的IP地址，所有其他的DHCP服务器撤销它们的提供以便将IP地址提供给下一次IP租用请求。</p><p>第四步：DHCP Server发送ACK数据包，确认信息。<br>数据包内容：在数据包中包含以下信息，表示将这些资源信息分配给Client.<br>Your(client) IP address:分配给Client的可用IP。<br>后面有许多项option信息，前两项是DHCP服务器发送的消息类型（ACK）和服务器的身份标识，后面几项是：<br>Subnet Mask:Client端分配到的IP的子网掩码；<br>Router:路由器<br>Domain Name Server:DNS,域名服务器<br>Domain Name:域名<br>IP Address Lease Time:IP租用期。</p><p>后续：客户端在接收到DHCP ack广播后，会向网络发送三个针对此IP地址的ARP解析请求以执行冲突检测，查询网络上有没有其它机器使用该IP地址；如果发现该IP地址已经被使用，客户机会发出一个DHCP decline数据包给DHCP服务器，拒绝此IP地址租约，并重新发送DHCP discover信息。此时，在DHCP服务器管理控制台中，会显示此IP地址为BAD_ADDRESS。<br>如果网络上没有其它主机使用此IP地址，则客户机的TCP/IP使用租约中提供的IP地址完成初始化，从而可以和其他网络中的主机进行通讯。</p><h4 id="DHCP缺点："><a href="#DHCP缺点：" class="headerlink" title="DHCP缺点："></a>DHCP缺点：</h4><p>1.DHCP不能查出网络上非DHCP客户机已经在使用的IP地址，例如网络有一非DHCP客户机A已经手工分配了IP地址:100.53.46.5，但是DHCP服务器并不能识别出该地址已经被分配了，它向DHCP客户机配了一个重复的IP地址:100.53.46.5，这就导致了IP地址的冲突。当然，这些IP地址可以从被配置在DHCP服务器上的任何范围中排除。<br>2.当网络上存在两个DHCP服务器时，一个DHCP服务器不和另一个DHCP服务器通信，就不能查出已被其他服务器租出去的IP地址。因此，两个DHCP服务器不应该在它们各自的范围中使用相同的IP地址。此外，DHCP服务器不能跨路由器与客户机通信，除非路由器允许BOOTP转发，或者子网允许DHCP中转借。</p>]]></content>
     
     
+    <categories>
+      
+      <category>DHCP</category>
+      
+    </categories>
+    
     
     <tags>
       
