@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    677 字
+                    676 字
                   </span>
                 
 
@@ -192,7 +192,7 @@
 <h3 id="NAT（IP-Network-Address-Translator）"><a href="#NAT（IP-Network-Address-Translator）" class="headerlink" title="NAT（IP Network Address Translator）"></a>NAT（IP Network Address Translator）</h3><h4 id="NAT技术使用原因和场景"><a href="#NAT技术使用原因和场景" class="headerlink" title="NAT技术使用原因和场景"></a>NAT技术使用原因和场景</h4><p>原因：公务IP数量少，主机数量多，无法给每个主机都分配一个公网IP，因此就需要多台内网主机共享一个公网IP。<br>使用场景：<br>1）内网中主要用于客户端访问互联网<br>2）同一时间仅少量主机访问互联网<br>3）内网中存在一个路由器负责访问外网</p>
 <h4 id="单向（向外）转换NAT：动态映射"><a href="#单向（向外）转换NAT：动态映射" class="headerlink" title="单向（向外）转换NAT：动态映射"></a>单向（向外）转换NAT：动态映射</h4><p>同一时间内仅有少量主机可访问公网，路由器为这些内网主机临时配置1对1的公网IP-内网IP映射关系；<br>存在问题：同一时间访问公网的主机数量多时，就需要对应数量的公网IP了。</p>
 <h4 id="双向（向内）NAT：IP地址静态映射"><a href="#双向（向内）NAT：IP地址静态映射" class="headerlink" title="双向（向内）NAT：IP地址静态映射"></a>双向（向内）NAT：IP地址静态映射</h4><p>使用场景：当公网主机想主动访问一个内网IP的时候，单向NAT和NAPT技术都无法实现，只能依靠双向NAT技术；<br>原理：NAT路由器会将内网IP和出口公网IP做一个静态都映射记录，访问出口公网IP都将映射都内网IP上。<br>缺点：无法使用端口映射，使用场景较少。</p>
-<h3 id="NAPT端口映射（Network-Address-Port-Translation）"><a href="#NAPT端口映射（Network-Address-Port-Translation）" class="headerlink" title="NAPT端口映射（Network Address Port Translation）"></a>NAPT端口映射（Network Address Port Translation）</h3><p>原理：如本地电脑访问<a href="http://www.zhihu.com，本地客户端会和知乎服务器建立一个TCP连接，操作系统使用如7000端口和本机IP（172.18.68.69）作为源IP端口，目的IP端口为103.41.167.234:80；NAT路由器则会把源IP映射为路由器上出口的公网IP194.54.21.7，并将源端口修改为一个随机的如7224端口（这里路由器修改了传输层的数据），发送往服务器，再服务器发回数据包后，在通过映射记录，修改发往本地的目的IP和端口，从而实现多台主机公用一个公网IP。">www.zhihu.com，本地客户端会和知乎服务器建立一个TCP连接，操作系统使用如7000端口和本机IP（172.18.68.69）作为源IP端口，目的IP端口为103.41.167.234:80；NAT路由器则会把源IP映射为路由器上出口的公网IP194.54.21.7，并将源端口修改为一个随机的如7224端口（这里路由器修改了传输层的数据），发送往服务器，再服务器发回数据包后，在通过映射记录，修改发往本地的目的IP和端口，从而实现多台主机公用一个公网IP。</a></p>
+<h3 id="NAPT端口映射（Network-Address-Port-Translation）"><a href="#NAPT端口映射（Network-Address-Port-Translation）" class="headerlink" title="NAPT端口映射（Network Address Port Translation）"></a>NAPT端口映射（Network Address Port Translation）</h3><p>原理：如本地电脑访问知乎，本地客户端会和知乎服务器建立一个TCP连接，操作系统使用如7000端口和本机IP（172.18.68.69）作为源IP端口，目的IP端口为103.41.167.234:80；NAT路由器则会把源IP映射为路由器上出口的公网IP194.54.21.7，并将源端口修改为一个随机的如7224端口（这里路由器修改了传输层的数据），发送往服务器，再服务器发回数据包后，在通过映射记录，修改发往本地的目的IP和端口，从而实现多台主机公用一个公网IP。</p>
 <h3 id="NAT技术优缺点"><a href="#NAT技术优缺点" class="headerlink" title="NAT技术优缺点"></a>NAT技术优缺点</h3><h4 id="优点："><a href="#优点：" class="headerlink" title="优点："></a>优点：</h4><p>共享公共IP地址，节约开支<br>扩展主机时不涉及公共地址<br>更换ISP服务商不会对主机地址产生影响<br>更好都安全性，外网服务无法主动访问内网服务<br>更好都隔离性</p>
 <h4 id="缺点："><a href="#缺点：" class="headerlink" title="缺点："></a>缺点：</h4><p>网络管理复杂<br>性能下降，每个数据包都要进行源/目IP端口都修改<br>重新修改校验和，因为数据包内容被修改<br>客户端缺乏公网IP导致一些功能缺失</p>
 
