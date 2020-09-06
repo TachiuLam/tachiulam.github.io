@@ -188,8 +188,7 @@
               </p>
             
             <article class="markdown-body">
-              <p>##《趣谈网络协议》学习总结：1-4讲</p>
-<h3 id="总结-思考："><a href="#总结-思考：" class="headerlink" title="总结/思考："></a>总结/思考：</h3><p>第四讲中关于DHCP的具体实现过程讲的比较抽象，于是上网google了一下具体的流程</p>
+              <h3 id="总结-思考："><a href="#总结-思考：" class="headerlink" title="总结/思考："></a>总结/思考：</h3><p>第四讲中关于DHCP的具体实现过程讲的比较抽象，于是上网google了一下具体的流程</p>
 <h4 id="DHCP的实现"><a href="#DHCP的实现" class="headerlink" title="DHCP的实现"></a>DHCP的实现</h4><p>DHCP实现大致分为4步<br>第一步：Client端在局域网内发起一个DHCP　Discover包，目的是想发现能够给它提供IP的DHCP Server。<br>数据包内容：Client端使用IP地址0.0.0.0发送一个目的IP地址位255.255.255.255的广播包，使用的协议为UDP协议。</p>
 <p>第二步：可用的DHCP Server接收到Discover包之后，通过发送DHCP Offer包给予Client端应答，意在告诉Client端它可以提供IP地址。<br>数据包内容：<br>（1）DHCP服务器仍然使用广播地址作为目的地址，因为此时请求分配IP的Client并没有自己ip,而可能有多个Client在使用0.0.0.0这个IP作为源IP向DHCP服务器发出IP分配请求，DHCP也不能使用0.0.0.0这个IP作为目的IP地址，于是依然采用广播的方式，告诉正在请求的Client们，这是一台可以使用的DHCP服务器。<br>（2）DHCP服务器提供了一个可用的IP,在数据包的Your (client) IP Address字段可以看到DHCP服务器提供的可用IP。<br>（3）除此之外，如图中红色矩形框的内容所示，服务器还发送了子网掩码，路由器，DNS，域名，IP地址租用期等信息。</p>
 <p>第三步：Client端接收到Offer包之后，发送DHCP Request包请求分配IP。<br>数据包内容：当Client收到了DHCP Offer包以后（如果有多个可用的DHCP服务器，那么可能会收到多个DHCP Offer包），确认有可以和它交互的DHCP服务器存在，于是Client发送Request数据包，请求分配IP。<br>此时的源IP和目的IP依然是0.0.0.0和255.255.255.255。包中包含客户端的MAC地址、接受的租约中的IP地址、提供此租约的DHCP服务器地址等）。告诉所有DHCP服务器它将接受哪一台服务器（一般是最先到达的server）提供的IP地址，所有其他的DHCP服务器撤销它们的提供以便将IP地址提供给下一次IP租用请求。</p>
