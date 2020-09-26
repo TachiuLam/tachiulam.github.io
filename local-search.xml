@@ -31,6 +31,33 @@
   
   
   <entry>
+    <title>《趣谈网络协议》学习总结：14-15讲</title>
+    <link href="/2020/09/05/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A14-15%E8%AE%B2/"/>
+    <url>/2020/09/05/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A14-15%E8%AE%B2/</url>
+    
+    <content type="html"><![CDATA[<h3 id="HTTP请求格式"><a href="#HTTP请求格式" class="headerlink" title="HTTP请求格式"></a>HTTP请求格式</h3><p>HTTP的报文主要分为1、请求行；2、请求首部；3、请求体</p><h4 id="请求行"><a href="#请求行" class="headerlink" title="请求行"></a>请求行</h4><p>HTTP请求行中包含请求方法（GET、POST、PATCH等）、URL、和HTTP版本</p><h4 id="首部字段"><a href="#首部字段" class="headerlink" title="首部字段"></a>首部字段</h4><p>首部字段用K：V方式表示；如我们请求一个网站，服务器给我们返回等应答中头部字段；客户端同样可以构造<br>请求头部字段<br>accept-ranges: bytes<br>access-control-allow-origin: *<br>age: 3035367<br>cache-control: max-age=31536000<br>content-length: 8035<br>content-type: image/png</p><h4 id="请求体"><a href="#请求体" class="headerlink" title="请求体"></a>请求体</h4><p>请求等实体内容</p><h3 id="HTTP返回格式"><a href="#HTTP返回格式" class="headerlink" title="HTTP返回格式"></a>HTTP返回格式</h3><p>HTTP响应报文主要包括1、状态行；2、首部；3、响应实体</p><h4 id="状态行"><a href="#状态行" class="headerlink" title="状态行"></a>状态行</h4><p>状态行包括HTTP版本、状态码、和描述响应结果等短语，如“ok”</p><h4 id="首部和响应实体"><a href="#首部和响应实体" class="headerlink" title="首部和响应实体"></a>首部和响应实体</h4><p>首部和响应实体与请求报文意义一样</p><h3 id="QUIC协议"><a href="#QUIC协议" class="headerlink" title="QUIC协议"></a>QUIC协议</h3><p>QUIC 协议通过基于 UDP 自定义的类似 TCP 的连接、重试、多路复用、流量控制技术，进<br>一步提升性能。</p><h3 id="HTTP-加密传输"><a href="#HTTP-加密传输" class="headerlink" title="HTTP 加密传输"></a>HTTP 加密传输</h3><p>HTTP在网络中是以明文方式传输等，存在中间人攻击等安全隐患，为确保安全需要采用加密传输，目前加密方式分为对称加密和非对称加密两种</p><h4 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h4><p>客户端和服务端使用同一个密钥加解密数据，但是密钥等传输一般只能通过线下传输，在客户端多等情况下，一对一为客户端提供密钥就不太实际<br>####非对称加密<br>客户端和服务端都有各自等公钥和私钥。同时客户端提供自己等公钥给服务端，客户端和服务端向彼此发送数据时，都是使用对方等公钥进行加密，这样就只有对方才具备私钥解密数据。采用客户端向服务端提供公钥的方式可以解决密钥传输的问题</p><h3 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h3><p>由权威机构对公钥进行认证，颁发证书，证书一般包含公钥、证书所有者信息、证书发布机构和证书有效期等信息，用于加强公钥等可信度。</p><h3 id="HTTPS工作方式"><a href="#HTTPS工作方式" class="headerlink" title="HTTPS工作方式"></a>HTTPS工作方式</h3><p>建立HTTPS连接时：<br>1、客户端：以明文传输 TLS 版本信息、加密套件候选列表、压缩算法候选列表等信息和一个随机数（在协商对称密钥的时候使用）给服务端<br>2、服务端：向客户端发送服务器选择使用的协议版本、加密套件、压缩算法等和一个随机数（用于后续的密钥协商）;以及服务端的证书<br>3、客户端：验证服务端证书，验证证书可信后，客户端计算产生随机数字 Pre-master，发送 Client Key Exchange，用证书中的公钥加密，再发送给服务器，服务器可以通过私钥解密<br>客户端还是服务器，都有了三个随机数，分别是：自己的、对端的，以及刚生成的 Pre-Master 随机数。通过这三个随机数，可以在客户端和服务器产生相同的对称密钥。<br>后续的数据传输便使用对称密钥加密<br>HTTPS采用非对称加密的方式传输密钥，对称加密的方式传输数据，解决了密钥传输的安全问题，同时也提高了数据传输的效率。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>网络</category>
+      
+      <category>HTTP</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>网络</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>《趣谈网络协议》学习总结：1-4讲</title>
     <link href="/2020/09/05/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A1-4%E8%AE%B2/"/>
     <url>/2020/09/05/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A1-4%E8%AE%B2/</url>
