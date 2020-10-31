@@ -17,7 +17,7 @@
   <meta name="description" content="">
   <meta name="author" content="Tachiu Lam">
   <meta name="keywords" content="">
-  <title>《趣谈网络协议》学习总结：14-15讲 - Tachiu Lam</title>
+  <title>《趣谈网络协议》学习总结：10-13讲 - Tachiu Lam</title>
 
   <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
 <link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
@@ -132,8 +132,8 @@
               
                 <div class="mt-3 post-meta">
                   <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-                  <time datetime="2020-09-26 21:27">
-                    2020年9月26日 晚上
+                  <time datetime="2020-10-31 14:08">
+                    2020年10月31日 下午
                   </time>
                 </div>
               
@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    851 字
+                    859 字
                   </span>
                 
 
@@ -183,23 +183,16 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2020年9月26日 晚上
+                  本文最后更新于：2020年10月31日 下午
                 
               </p>
             
             <article class="markdown-body">
-              <h3 id="HTTP请求格式"><a href="#HTTP请求格式" class="headerlink" title="HTTP请求格式"></a>HTTP请求格式</h3><p>HTTP的报文主要分为1、请求行；2、请求首部；3、请求体</p>
-<h4 id="请求行"><a href="#请求行" class="headerlink" title="请求行"></a>请求行</h4><p>HTTP请求行中包含请求方法（GET、POST、PATCH等）、URL、和HTTP版本</p>
-<h4 id="首部字段"><a href="#首部字段" class="headerlink" title="首部字段"></a>首部字段</h4><p>首部字段用K：V方式表示；如我们请求一个网站，服务器给我们返回等应答中头部字段；客户端同样可以构造<br>请求头部字段<br>accept-ranges: bytes<br>access-control-allow-origin: *<br>age: 3035367<br>cache-control: max-age=31536000<br>content-length: 8035<br>content-type: image/png</p>
-<h4 id="请求体"><a href="#请求体" class="headerlink" title="请求体"></a>请求体</h4><p>请求等实体内容</p>
-<h3 id="HTTP返回格式"><a href="#HTTP返回格式" class="headerlink" title="HTTP返回格式"></a>HTTP返回格式</h3><p>HTTP响应报文主要包括1、状态行；2、首部；3、响应实体</p>
-<h4 id="状态行"><a href="#状态行" class="headerlink" title="状态行"></a>状态行</h4><p>状态行包括HTTP版本、状态码、和描述响应结果等短语，如“ok”</p>
-<h4 id="首部和响应实体"><a href="#首部和响应实体" class="headerlink" title="首部和响应实体"></a>首部和响应实体</h4><p>首部和响应实体与请求报文意义一样</p>
-<h3 id="QUIC协议"><a href="#QUIC协议" class="headerlink" title="QUIC协议"></a>QUIC协议</h3><p>QUIC 协议通过基于 UDP 自定义的类似 TCP 的连接、重试、多路复用、流量控制技术，进<br>一步提升性能。</p>
-<h3 id="HTTP-加密传输"><a href="#HTTP-加密传输" class="headerlink" title="HTTP 加密传输"></a>HTTP 加密传输</h3><p>HTTP在网络中是以明文方式传输等，存在中间人攻击等安全隐患，为确保安全需要采用加密传输，目前加密方式分为对称加密和非对称加密两种</p>
-<h4 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h4><p>客户端和服务端使用同一个密钥加解密数据，但是密钥等传输一般只能通过线下传输，在客户端多等情况下，一对一为客户端提供密钥就不太实际<br>####非对称加密<br>客户端和服务端都有各自等公钥和私钥。同时客户端提供自己等公钥给服务端，客户端和服务端向彼此发送数据时，都是使用对方等公钥进行加密，这样就只有对方才具备私钥解密数据。采用客户端向服务端提供公钥的方式可以解决密钥传输的问题</p>
-<h3 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h3><p>由权威机构对公钥进行认证，颁发证书，证书一般包含公钥、证书所有者信息、证书发布机构和证书有效期等信息，用于加强公钥等可信度。</p>
-<h3 id="HTTPS工作方式"><a href="#HTTPS工作方式" class="headerlink" title="HTTPS工作方式"></a>HTTPS工作方式</h3><p>建立HTTPS连接时：<br>1、客户端：以明文传输 TLS 版本信息、加密套件候选列表、压缩算法候选列表等信息和一个随机数（在协商对称密钥的时候使用）给服务端<br>2、服务端：向客户端发送服务器选择使用的协议版本、加密套件、压缩算法等和一个随机数（用于后续的密钥协商）;以及服务端的证书<br>3、客户端：验证服务端证书，验证证书可信后，客户端计算产生随机数字 Pre-master，发送 Client Key Exchange，用证书中的公钥加密，再发送给服务器，服务器可以通过私钥解密<br>客户端还是服务器，都有了三个随机数，分别是：自己的、对端的，以及刚生成的 Pre-Master 随机数。通过这三个随机数，可以在客户端和服务器产生相同的对称密钥。<br>后续的数据传输便使用对称密钥加密<br>HTTPS采用非对称加密的方式传输密钥，对称加密的方式传输数据，解决了密钥传输的安全问题，同时也提高了数据传输的效率。</p>
+              <p>总结/思考：<br>UDP协议<br>UDP协议的首部有8个字节，一共四个字段，每个字段的长度都是2个字节，16比特（位）。<br>UDP 特点<br>1、无连接：UDP是无连接的协议，他在进行数据传输之前不需要先建立连接，也没有各种重传机制、拥塞控制和流量控制，所以传输速度很快，消耗很低，延迟小，数据传输效率高，适合对可靠性要求不高的应用程序，或者可以保障可靠性的应用程序，如DNS、TFTP、SNMP等。<br>2、不可靠：只负责数据的发送，不关心数据是否送达，没有确认机制，主机收到数据也不会有响应<br>3、分组首部开销小，TCP的首部是20字节，UDP的首部是8字节<br>4、面向报文的：TCP(面向连接的传输控制协议)是面向字节传输，而UDP是面向报文传输，对于应用层交下来的报文段不进行拆分合并，直接保留原有报文段的边界然后添加UDP的首部就交付给网络层。不论报文的长短，UDP都不会进行处理。因此为了避免报文段过短降低传输效率以及报文段过长导致网络层对IP数据进行分片操作，应用层应该选择合适长度的报文交付给运输层的UDP。</p>
+<p>TCP协议<br>TCP 用于从应用程序到网络的数据传输控制。<br>TCP 负责在数据传送之前将它们分割为 IP 包，然后在它们到达的时候将它们重组。<br>是面向连接的、可靠的、基于字节流的传输层通信协议。<br>TCP 特点<br>1、点对点（不能广播、多播），面向连接<br>2、双向传递（全双工）<br>3、字节流：打包成报文段、保证有序接收、重复报文自动丢弃<br>     缺点：不维护应用报文的边界（需要HTTP协议自己定义/r/n或content length进行结尾、GRPC）<br>     优点：不强制要求应用必须离散的创建数据块，不限制数据块大小<br>4、流量缓存：解决速度不匹配问题（滑动窗口）<br>5、可靠的传输服务（保证可达，丢包时通过重发进而增加时延实现可靠性）<br>6、拥塞控制</p>
+<p>MSS：Max Segment Size<br>定义：仅指TCP承载数据，不包含TCP头部大小，参见RFC879<br>MSS选择目的：<br>尽量每个Segment报文段携带更多的数据，以减少头部空间占用比率<br>防止Segment被某个设备的IP层基于MTU拆分<br>默认MSS：536字节（标准默认MTU576字节，20字节IP头部，20字节TCp头部）</p>
+<p>滑动窗口<br>是TCP流量控制的一个手段。这里说的窗口，指的是接收通告窗口（Receiver Window，RWND）。它告诉对方本端的TCP接收缓冲区还能容纳多少字节的数据，这样对方就可以控制发送数据的速度。</p>
+<p>拥塞控制<br>拥塞控制包含四个方式：慢启动、拥塞避免、快速重传和快速恢复，用于应对通信网络环境差时的丢包问题<br>丢包情况严重时采用慢启动+拥塞避免方式；当丢包情况不严重时，可进行快速重传和快速恢复方式；不一定会进入慢启动状态.</p>
 
             </article>
             <hr>
@@ -232,7 +225,7 @@
                   <div class="post-prev col-6">
                     
                     
-                      <a href="/2020/10/31/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A22-23%E8%AE%B2/">
+                      <a href="/2020/10/31/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A10-13%E8%AE%B2/">
                         <i class="iconfont icon-arrowleft"></i>
                         <span class="hidden-mobile">《趣谈网络协议》学习总结：10-13讲</span>
                         <span class="visible-mobile">上一篇</span>
@@ -242,8 +235,8 @@
                   <div class="post-next col-6">
                     
                     
-                      <a href="/2020/09/06/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A5-9%E8%AE%B2/">
-                        <span class="hidden-mobile">《趣谈网络协议》学习总结：5-9讲</span>
+                      <a href="/2020/09/26/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A14-15%E8%AE%B2/">
+                        <span class="hidden-mobile">《趣谈网络协议》学习总结：14-15讲</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -441,7 +434,7 @@
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "《趣谈网络协议》学习总结：14-15讲&nbsp;",
+        "《趣谈网络协议》学习总结：10-13讲&nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,
