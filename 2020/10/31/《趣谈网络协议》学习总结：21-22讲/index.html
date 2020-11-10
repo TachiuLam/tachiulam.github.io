@@ -183,13 +183,13 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2020年10月31日 下午
+                  本文最后更新于：2020年11月10日 晚上
                 
               </p>
             
             <article class="markdown-body">
-              <p>数据中心：<br> 1、边界路由器（Border Router）：数据中心的入口和出口也是路由器，由于在数据中心的边界，称为边界路由器（Border Router），边界路由器会连接多个运营商网络。<br>2、网卡绑定：多个网卡、多个网线利用LACP（Link Aggregation Control Protocol）协议聚合成一个网卡、一个网线。<br>3、交换机高可用方式：1）使用STD协议连接，形成主备；2）利用堆叠技术，将多个交换机形成一个逻辑交换机，接入层交换机多根线分别连接到多个交换机上，并且通过堆叠的私有协议，形成双活的连接方式。<br>4、可用区：汇聚层将大量的计算节点相互连接在一起，形成一个集群。在这个集群里面，服务器之间通过二层互通，这个区域常称为一个 POD（Point Of Delivery）；<br>5、核心交换机：连接多个可用区的交换机。<br>6、二层设备高可用技术：TRILL（Transparent Interconnection of Lots of Link），即多链接透明互联协议。运行 TRILL 协议的交换机称为 RBridge，是根据mac进行路由转发的网桥设备，可计算最短路径，也可通过等价路由方式进行负载均衡和高可用。</p>
-<p>VPN：<br>VPN，全名 Virtual Private Network，虚拟专用网，就是利用开放的公众网络，建立专用数据传输通道，将远程的分支机构、移动办公人员等连接起来。<br>VPN 通过隧道技术在公众网络上仿真一条点到点的专线，涉及三种协议：乘客协议、隧道协议和承载协议。<br>IPsec VPN，基于 IP 协议的安全隧道协议。具备私密性、完整性、真实性的机制；通过预共享密钥或数字签名的方式确认通信方身份。<br>IKE组件：进行密钥交换；<br>SA组件：进行连接维护；<br>IPsec VPN建立过程：1）使用DH算法计算出对称密钥K；2）建立 IPsec SA，在这个 SA 里面，双方会生成一个随机的对称密钥 M，由 K 加密传给对方，然后使用 M 进行双方接下来通信的数据。对称密钥M具有时效性；IPsec SA 里面有以下内容：<br>SPI（Security Parameter Index），用于标识不同的连接；<br>双方商量好的加密算法、哈希算法和封装模式；<br>生存周期，超过这个周期，就需要重新生成一个 IPsec SA，重新生成对称密钥</p>
+              <h3 id="数据中心："><a href="#数据中心：" class="headerlink" title="数据中心："></a>数据中心：</h3><p>1、边界路由器（Border Router）：数据中心的入口和出口也是路由器，由于在数据中心的边界，称为边界路由器（Border Router），边界路由器会连接多个运营商网络。<br>2、网卡绑定：多个网卡、多个网线利用LACP（Link Aggregation Control Protocol）协议聚合成一个网卡、一个网线。<br>3、交换机高可用方式：1）使用STD协议连接，形成主备；2）利用堆叠技术，将多个交换机形成一个逻辑交换机，接入层交换机多根线分别连接到多个交换机上，并且通过堆叠的私有协议，形成双活的连接方式。<br>4、可用区：汇聚层将大量的计算节点相互连接在一起，形成一个集群。在这个集群里面，服务器之间通过二层互通，这个区域常称为一个 POD（Point Of Delivery）；<br>5、核心交换机：连接多个可用区的交换机。<br>6、二层设备高可用技术：TRILL（Transparent Interconnection of Lots of Link），即多链接透明互联协议。运行 TRILL 协议的交换机称为 RBridge，是根据mac进行路由转发的网桥设备，可计算最短路径，也可通过等价路由方式进行负载均衡和高可用。</p>
+<h3 id="VPN："><a href="#VPN：" class="headerlink" title="VPN："></a>VPN：</h3><p>VPN，全名 Virtual Private Network，虚拟专用网，就是利用开放的公众网络，建立专用数据传输通道，将远程的分支机构、移动办公人员等连接起来。<br>VPN 通过隧道技术在公众网络上仿真一条点到点的专线，涉及三种协议：乘客协议、隧道协议和承载协议。<br>IPsec VPN，基于 IP 协议的安全隧道协议。具备私密性、完整性、真实性的机制；通过预共享密钥或数字签名的方式确认通信方身份。<br>IKE组件：进行密钥交换；<br>SA组件：进行连接维护；<br>IPsec VPN建立过程：1）使用DH算法计算出对称密钥K；2）建立 IPsec SA，在这个 SA 里面，双方会生成一个随机的对称密钥 M，由 K 加密传给对方，然后使用 M 进行双方接下来通信的数据。对称密钥M具有时效性；IPsec SA 里面有以下内容：<br>SPI（Security Parameter Index），用于标识不同的连接；<br>双方商量好的加密算法、哈希算法和封装模式；<br>生存周期，超过这个周期，就需要重新生成一个 IPsec SA，重新生成对称密钥</p>
 
             </article>
             <hr>
@@ -201,7 +201,7 @@
                     
                       <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C/">网络</a>
                     
-                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C/HTTP/">HTTP</a>
+                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C/%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%BF%83/">数据中心</a>
                     
                   </div>
                 
