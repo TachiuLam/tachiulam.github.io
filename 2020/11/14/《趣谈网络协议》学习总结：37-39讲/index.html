@@ -17,7 +17,7 @@
   <meta name="description" content="">
   <meta name="author" content="Tachiu Lam">
   <meta name="keywords" content="">
-  <title>《趣谈网络协议》学习总结：26-28讲 - Tachiu Lam</title>
+  <title>《趣谈网络协议》学习总结：37-39讲 - Tachiu Lam</title>
 
   <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
 <link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    1k 字
+                    1.3k 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    11
+                    13
                      分钟
                   </span>
                 
@@ -188,13 +188,16 @@
               </p>
             
             <article class="markdown-body">
-              <h3 id="网络传输节点："><a href="#网络传输节点：" class="headerlink" title="网络传输节点："></a>网络传输节点：</h3><h4 id="当一个数据包进入一台设备的时候，会经历一下5个节点："><a href="#当一个数据包进入一台设备的时候，会经历一下5个节点：" class="headerlink" title="当一个数据包进入一台设备的时候，会经历一下5个节点："></a>当一个数据包进入一台设备的时候，会经历一下5个节点：</h4><p>1）prerouting：路由判断前；2）input：IP与本地匹配，数据包传入传输层；3）forward：IP不匹配，转发数据包；4）output：传输层（上层）处理后返回处理结果；5）postrouting：路由判断后的节点（forward，output节点之后）<br>Netfilter：在上述节点插入hook函数，干预数据包传输（接收、丢弃、发送给用户态进程处理）；linux内核模块ip_tables就是依赖该框架实现；<br>iptables：客户端程序，使用命令行干预内核ip_tables规则；具备表和链的概念；<br>iptables表：raw-mangle-nat-filter<br>filter表：处理过滤功能，主要包含三个链：1）input链：过滤所有目标地址是本机的数据包；2）forward链：过滤所有经过本机的数据包；3）output链：过滤所有本机产生的数据包；<br>nat表：主要是处理网络地址（源、目）转换，包含三个链：1）prerouting链：在数据包到达防火墙时改变目标地址；2）output链：改变本机产生的数据包的目标地址；3）postrouting链：在数据包离开防火墙时更改数据包源地址；<br>mangle表：主要是修改数据包，包含prerouting链、input链、forward链、output链、postrouting链；</p>
-<h3 id="QoS（服务质量）控制："><a href="#QoS（服务质量）控制：" class="headerlink" title="QoS（服务质量）控制："></a>QoS（服务质量）控制：</h3><p>Linux可通过TC控制网络的QoS，主要通过队列方式</p>
-<h3 id="无类别排队规则："><a href="#无类别排队规则：" class="headerlink" title="#无类别排队规则："></a>#无类别排队规则：</h3><p>1.1、pfifo_fast技术，分为三个队列（Band），具备优先级，根据网络包里的TOS，判断进入的队列，处于优先级高的队列优先发送；<br>1.2、随机公平队列：建立很多的 FIFO 的队列，TCP Session 会计算 hash 值，通过 hash 值分配到某个队列。在队列的另一端，网络包会通过轮询策略从各个队列中取出发送。这样不会有一个 Session 占据所有的流量<br>1.3、令牌桶规则（TBF）：所有的网络包排成队列，拿到令牌才能发送。令牌根据设定的速度生成，即便队列很长，也是按照一定的速度进行发送的，令牌也不无限生成，令牌桶放满即不再生成，防止令牌大量积累，出现流量激增。</p>
-<h4 id="基于类别的队列规则："><a href="#基于类别的队列规则：" class="headerlink" title="基于类别的队列规则："></a>基于类别的队列规则：</h4><p>2.1、分层令牌桶规则（HTB）：TC 可以为某个网卡 eth0 创建一个 HTB 的队列规则，然后对该root创建分支，每个分支有固定的两个发送速度；同一个 root 下的子类（分支）可以相互借流量，不浪费带宽；<br>云中网络 Openvswitch 中，主要使用的是分层令牌桶规则（HTB），将总的带宽在一棵树上按照配置的比例进行分配，并且在一个分支不用的时候，可以借给另外的分支，从而增强带宽利用率</p>
-<h3 id="云中的网络隔离："><a href="#云中的网络隔离：" class="headerlink" title="云中的网络隔离："></a>云中的网络隔离：</h3><p>Underlay网络：底层的物理网络设备组成的网络；<br>Overlay网络：基于物理网络的虚拟化网络实现；</p>
-<h4 id="Overlay技术一：GRE（-Generic-Routing-Encapsulation）："><a href="#Overlay技术一：GRE（-Generic-Routing-Encapsulation）：" class="headerlink" title="Overlay技术一：GRE（ Generic Routing Encapsulation）："></a>Overlay技术一：GRE（ Generic Routing Encapsulation）：</h4><p>将IP包封装在GRE包里，外部再加上IP头，形成一个虚拟的点对点的连接隧道，由具备路由功能的设备如路由器进行封装、解封数据包；<br>GRE缺点：1）GRE是点对点隧道，每个虚拟网络间需要建立一个隧道，隧道数目随网络数呈指数增长；2）GRE不支持组播，GRE会将广播帧广播到所有与该节点有隧道连接的节点；3）很多防火墙和三层网络设备无法解析GRE；</p>
-<h4 id="Overlay技术二：VXLAN："><a href="#Overlay技术二：VXLAN：" class="headerlink" title="Overlay技术二：VXLAN："></a>Overlay技术二：VXLAN：</h4><p>VXLAN封装的是二层数据帧，在二层外封装一个VXLAN头，包含24位VXLAN ID，在VXLAN头部外还封装了UDP、IP、MAC头部；<br>VTEP（VXLAN Tunnel Endpoint）：实现封装和解封VXLAN数据包的节点称为VTEP；VTEP通过组播定位目标机器，不是点对点；<br>OpenvSwitch 支持三类隧道：GRE、VXLAN、IPsec_GRE。在使用 OpenvSwitch 的时候，虚拟交换机就相当于 GRE 和 VXLAN 封装的端点。</p>
+              <h3 id="平台搭建："><a href="#平台搭建：" class="headerlink" title="平台搭建："></a>平台搭建：</h3><h4 id="1、数据中心"><a href="#1、数据中心" class="headerlink" title="1、数据中心"></a>1、数据中心</h4><p>数据中心一般由多个可用区组成，每个可用区包含多个机房，每个机房又包含一片一片的机柜，每个机柜上放置服务器，机柜有接入交换机，由汇聚交换机相连；每台服务器上由Open vSwitch创建虚拟交换机并进行连接管理，同时使用VPC（虚拟私有网络）进行虚拟机的网络管理。接下来为了应对业务需求，就需要数据库对数据进行持久化保存，缓存减轻数据库读写压力，负载均衡、CDN等方式减轻服务器压力提升用户访问体验等。</p>
+<h4 id="2、外网IP广播"><a href="#2、外网IP广播" class="headerlink" title="2、外网IP广播"></a>2、外网IP广播</h4><p>边界路由器通过BGP协议，将数据中心等外网IP对外广播，由其他运营商等路由器进行路由信息记录；</p>
+<h4 id="3、域名解析"><a href="#3、域名解析" class="headerlink" title="3、域名解析"></a>3、域名解析</h4><p>非移动端设备的域名解析请求全过程为本地hosts文件、本地DNS解析缓存、本地DNS服务器、根DNS服务器、顶级DNS服务器、权威DNS服务器；移动端一般使用HTTPDNS服务，直接调用HTTPDNS服务器，获取到对应到公网IP。</p>
+<h4 id="4、静态资源CDN"><a href="#4、静态资源CDN" class="headerlink" title="4、静态资源CDN"></a>4、静态资源CDN</h4><p>静态资源一般保存在nginx后等varnish缓存，对于不常更新的静态图片等会保存在对象存储里，并配置CDN，下发到边缘节点。本地 DNS 服务器去请求 CDN 的全局负载均衡器解析域名，全局负载均衡器会为用户选择一台合适的缓存服务器提供服务，将 IP 返回给客户端，客户端去访问这个边缘节点，下载资<br>源。缓存服务器响应用户请求，将用户所需内容传送到用户终端。如无用户所要内容，则会向上级请求，直至追溯至愿服务器。</p>
+<h4 id="5、建立连接"><a href="#5、建立连接" class="headerlink" title="5、建立连接"></a>5、建立连接</h4><p>HTTP是基于TCP连接的，用户访问需要先通过TCP三次握手建立TCP连接，并各自在TCP层会晤一个连接的状态机。建立完TCP连接后，会进行HTTPS连接建立，双方协商TLS版本、加密和压缩算法，验证证书，然后创建对称密钥用于传输加密。HTTPS采用非对称加密的方式传输密钥，对称加密的方式传输数据，解决了密钥传输的安全问题，同时也提高了数据传输的效率。</p>
+<h4 id="6、网络传输"><a href="#6、网络传输" class="headerlink" title="6、网络传输"></a>6、网络传输</h4><p>HTTP网络报文主要包括请求行、请求头部、请求正文，由浏览器或者HTTP客户端封装传递给传输层；在TCP层会把报文封装成一个个报文段，并附加上TCP头部，TCP头部包含源目的端口号，发送给网络层；IP层会附加上IP头部，包含源目IP地址等信息，将报文段封装为网络包，根据路由信息，发送往对应等网关。此时会根据ARP协议获取下一跳IP的mac地址，将下一跳的MAC作为目标地址，放入MAC头部封装，通过交换机发送。</p>
+<h4 id="7、流控拥塞与重传"><a href="#7、流控拥塞与重传" class="headerlink" title="7、流控拥塞与重传"></a>7、流控拥塞与重传</h4><p>网络包传输链路复杂，容易产生拥塞和丢包现象，需要依靠TCP协议对包进行重传，并通过TCP的滑动窗口协议进行传输控制。</p>
+<h4 id="8、NAT"><a href="#8、NAT" class="headerlink" title="8、NAT"></a>8、NAT</h4><p>网络包到达目标公网IP后，由于MAC地址和IP地址匹配，网络包即将进入数据中心内部，由虚拟网关节点到NAT规则将公网IP转换为VPC内对应到私网IP，在由内部路由传递到对应到服务器上，实际上不止NAT，端口也会对应到进行NAT转换，这样数据包才能传递到对应到服务上进行处理。</p>
+<h4 id="9、RPC调用"><a href="#9、RPC调用" class="headerlink" title="9、RPC调用"></a>9、RPC调用</h4><p>网络包到达物理机A后，OVS 会将包从 VXLAN 隧道里面解出来，发给 HAProxy 所在的虚拟机。HAProxy 所在的虚拟机发现 MAC 地址匹配，目标 IP 地址匹配，就根据 TCP 端口，将包发给HAProxy 进程，因为 HAProxy 是在监听这个 TCP 端口的。HAProxy是四层负载，会将请求转发给后端的controller层，这个包发出去之后，还是会被物理机上的 OVS 放入 VXLAN 隧道里面，OVS 会将包从 VXLAN 隧道里面解出来，发给 Controller 层所在的虚拟机。由controller层处理具体http请求。</p>
+<h4 id="10、HTTP请求处理"><a href="#10、HTTP请求处理" class="headerlink" title="10、HTTP请求处理"></a>10、HTTP请求处理</h4><p>Controller 层会通过 RPC 调用这个HTTP请求包含的服务层，以Dubbo为例：Controller 层需要读取注册中心，将具体HTTP请求的服务的进程列表拿出来，选出一个来调用。Dubbo 中默认的 RPC 协议是 Hessian2。Hessian2 将下单的远程调用序列化为二进制进行传输。调用的时候，统一使用 Hessian2 进行序列化，使用 Netty 进行传输，底层如果跨物理机，仍然需要通过 VXLAN 的封装和解封装。</p>
 
             </article>
             <hr>
@@ -206,7 +209,7 @@
                     
                       <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C/">网络</a>
                     
-                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C/%E4%BA%91%E4%B8%AD%E7%BD%91%E7%BB%9C/">云中网络</a>
+                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C/%E7%BD%91%E7%BB%9C%E4%B8%B2%E8%AE%B2/">网络串讲</a>
                     
                   </div>
                 
@@ -227,9 +230,9 @@
                   <div class="post-prev col-6">
                     
                     
-                      <a href="/2020/11/14/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A29-31%E8%AE%B2/">
+                      <a href="/2020/11/14/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A26-28%E8%AE%B2/">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">《趣谈网络协议》学习总结：28-31讲</span>
+                        <span class="hidden-mobile">《趣谈网络协议》学习总结：26-28讲</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -237,8 +240,8 @@
                   <div class="post-next col-6">
                     
                     
-                      <a href="/2020/11/14/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A37-39%E8%AE%B2/">
-                        <span class="hidden-mobile">《趣谈网络协议》学习总结：37-39讲</span>
+                      <a href="/2020/10/31/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A23-25%E8%AE%B2/">
+                        <span class="hidden-mobile">《趣谈网络协议》学习总结：23-25讲</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -436,7 +439,7 @@
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "《趣谈网络协议》学习总结：26-28讲&nbsp;",
+        "《趣谈网络协议》学习总结：37-39讲&nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,
