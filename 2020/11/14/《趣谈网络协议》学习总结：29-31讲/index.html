@@ -17,7 +17,7 @@
   <meta name="description" content="">
   <meta name="author" content="Tachiu Lam">
   <meta name="keywords" content="">
-  <title>《趣谈网络协议》学习总结：23-25讲 - Tachiu Lam</title>
+  <title>《趣谈网络协议》学习总结：28-31讲 - Tachiu Lam</title>
 
   <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
 <link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
@@ -132,8 +132,8 @@
               
                 <div class="mt-3 post-meta">
                   <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-                  <time datetime="2020-10-31 16:07">
-                    2020年10月31日 下午
+                  <time datetime="2020-11-14 14:28">
+                    2020年11月14日 下午
                   </time>
                 </div>
               
@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    1.3k 字
+                    942 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    14
+                    10
                      分钟
                   </span>
                 
@@ -183,21 +183,17 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2020年11月10日 晚上
+                  本文最后更新于：2020年11月14日 下午
                 
               </p>
             
             <article class="markdown-body">
-              <h3 id="移动网络："><a href="#移动网络：" class="headerlink" title="移动网络："></a>移动网络：</h3><h4 id="2G时代上网："><a href="#2G时代上网：" class="headerlink" title="2G时代上网："></a>2G时代上网：</h4><p>1）手机通过无线信号连接基站；2）基站一面接无线，一面接核心网；3）核心网一面接基站请求，判断是否合法等，一面通过网关接电话网络；</p>
-<h4 id="2-5G网络："><a href="#2-5G网络：" class="headerlink" title="2.5G网络："></a>2.5G网络：</h4><p>在2G的网络基础上加入了分组交换业务；在基站接核心网的组件中，多了分组控制端元，提供分组交换通道；在核心网里面，有个朝前的接待员（SGSN，Service GPRS Supported Node）和朝后连接IP 网络的网关型 GPRS 支持节点（GGSN，Gateway GPRS Supported Node）。</p>
-<h4 id="3G网络："><a href="#3G网络：" class="headerlink" title="3G网络："></a>3G网络：</h4><p>主要是增加了无线的带宽</p>
-<h4 id="4G网络："><a href="#4G网络：" class="headerlink" title="4G网络："></a>4G网络：</h4><p>手机直接通过 eNodeB 连接 SGW，连上核心网，SGW 相当于数据面的接待员，并通过PGW 连到 IP 网络。PGW 就是出口网关。在出口网关，有一个组件 PCRF，称为策略和计费控制单元，用来控制上网策略和流量的计费。</p>
-<h3 id="4G网络协议-控制面协议："><a href="#4G网络协议-控制面协议：" class="headerlink" title="4G网络协议-控制面协议："></a>4G网络协议-控制面协议：</h3><p>一个手机想上网的时候，先要连接 eNodeB，并通过 S1-MME 接口，请求 MME 对这个手机进行认证和鉴权。eNodeB和MME之间使用SCTP协议进行通信。SCTP特点：1）多宿主，引入联合的概念，将多个接口、多条路径放到一个联合中来。当检测到一条路径失效时，协议就会通过另外一条路径来发送通信数据，从而使一台机器支持多个网卡；2）将一个联合分成多个流，一个联合中的所有流都是独立的，但均与该联合相关。每个流都给定了一个流编号，它被编码到 SCTP 报文中，通过联合在网络上传送。3）四次握手，引入cookie概念，防止SYN攻击；4）消息分帧，SCTP 借鉴了 UDP 的机制，在数据传输中提供了消息分帧功能。当一端对一个套接字执行写操作时，可确保对等端读出的数据大小与此相同；5）断开连接是三次挥手，当一端关闭连接时，两端都需关闭。</p>
-<h3 id="4G网络协议-数据面协议："><a href="#4G网络协议-数据面协议：" class="headerlink" title="4G网络协议-数据面协议："></a>4G网络协议-数据面协议：</h3><p>数据面的协议都是通过 GTP-U，分为乘客协议、隧道协议、承载协议。其中乘客协议是手机发出来的包，IP 是手机的 IP，隧道协议里面有隧道 ID，不同的手机上线会建立不同的隧道，因而需要隧道 ID 来标识。承载协议的 IP 地址是 SGW 和 PGW 的 IP 地址。</p>
-<h3 id="手机上网过程："><a href="#手机上网过程：" class="headerlink" title="手机上网过程："></a>手机上网过程：</h3><p>1）寻找并发送Attach Request给附近基站eNodeB；2）eNodeB 将请求发给 MME；3）MME 去请求手机，一是认证，二是鉴权，还会请求 HSS 看看有没有钱，看看是在哪里上网；4）认证通过，MME请求SGW创建会话、分配隧道；5）SGW请求PGW创建会话、分配隧道；6）PGW答复，并创建隧道，标记手机请求；7）SGW回复MME会话创建完成，回复隧道ID；8）MME回复eNodeB隧道创建完成，回复隧道ID；9）eNodeB回复MME，自身分给SGW的隧道ID；10）MME 将 eNodeB 给 SGW 分配的隧道 ID  告知 SGW，从而前面的隧道也建设完毕。</p>
-<h3 id="异地上网问题："><a href="#异地上网问题：" class="headerlink" title="异地上网问题："></a>异地上网问题：</h3><p>异地上网时，手机请求附近的eNodeB，并通过MME去查询国内运营商的HSS，验证用户信息，如果验证通过，手机会与异地的SGW建立隧道，异地的SGW再与国内运营商的PGW建立隧道，由PGW内的PCRF组件计算上网流量，控制上网策略。因此异地上网时，上网策略还是由国内运营商控制的。</p>
-<h3 id="虚拟网卡："><a href="#虚拟网卡：" class="headerlink" title="虚拟网卡："></a>虚拟网卡：</h3><p>通过Linux上的TUN/TAP技术实现<br>###虚拟机间通信：<br>在Linux 上通过 brctl命令创建虚拟的网桥 brctl addbr br0。再将两个虚拟机的虚拟网卡，都连接到虚拟网桥 brctladdif br0 tap0 上，这样将两个虚拟机配置相同的子网网段，两台虚拟机就能够相互通信。 虚拟机访问外部：1）桥接：虚拟机和物理机网卡连接在同一个网桥上，使用同一网段，和物理机使用同一个DHCP等服务器；解决了虚拟机间、虚拟机和外部的通信问题，但同一子网内设备过多会引发广播问题；2）NAT：物理机会创建虚拟的DHCP服务器和独立的网桥br0，虚拟机要想访问互联网，需要通过 br0 连到路由器上，然后通过路由器将请求 NAT 成为物理网络的地址，转发到物理网络。<br>虚拟机隔离问题：基于物理网卡，为每个用户用 vconfig 创建一个带 VLAN 的网卡。不同的用户使用不同的虚拟网桥，带 VLAN 的虚拟网卡也连接到虚拟网桥上。</p>
-<h3 id="SDN（软件定义网络）："><a href="#SDN（软件定义网络）：" class="headerlink" title="SDN（软件定义网络）："></a>SDN（软件定义网络）：</h3><p>OpenFlow 是 SDN 控制器和网络设备之间互通的南向接口协议，OpenvSwitch 用于创建软<br>件的虚拟交换机。OpenvSwitch 是支持 OpenFlow 协议的，当然也有一些硬件交换机也支持<br>OpenFlow 协议。它们都可以被统一的 SDN 控制器管理，从而实现物理机和虚拟机的网络连<br>通。</p>
+              <h3 id="容器网络："><a href="#容器网络：" class="headerlink" title="容器网络："></a>容器网络：</h3><p>环境隔离技术：1）命名空间（namespace）；2）机制网络（cgroup）<br>命名空间（namespace）：每个namespace 中的应用看到的是不同的 IP 地址、用户空间、程号等。<br>机制网络（cgroup）：cgroup 全称 control groups，是 Linux 内核提供的一种可以限制、隔离进程使用的资源机制。包含很多子系统：<br>CPU 子系统使用调度程序为进程控制 CPU 的访问；<br>cpuset，如果是多核心的 CPU，这个子系统会为进程分配单独的 CPU 和内存；<br>memory 子系统，设置进程的内存限制以及产生内存资源报告；<br>blkio 子系统，设置限制每个块设备的输入输出控制；<br>net_cls，这个子系统使用等级识别符（classid）标记网络数据包，可允许 Linux 流量控制<br>程序（tc）识别从具体 cgroup 中生成的数据包。</p>
+<h4 id="容器与宿主机通信："><a href="#容器与宿主机通信：" class="headerlink" title="容器与宿主机通信："></a>容器与宿主机通信：</h4><p>在 Linux 下，可以创建一对 veth pair 的网卡，一端绑定docker网桥，一段绑定namespace，实现通信；</p>
+<h4 id="容器访问外网："><a href="#容器访问外网：" class="headerlink" title="容器访问外网："></a>容器访问外网：</h4><p>NAT模式：SNAT</p>
+<h4 id="外网访问容器服务："><a href="#外网访问容器服务：" class="headerlink" title="外网访问容器服务："></a>外网访问容器服务：</h4><p>1）docker-proxy：比如监听10080端口，转换为80端口<br>2）DNAT：在 -A PREROUTING 阶段加一个规则，将到端口 10080的 DNAT 称为容器的私有网络。</p>
+<h3 id="跨节点容器网络方案——flannel："><a href="#跨节点容器网络方案——flannel：" class="headerlink" title="跨节点容器网络方案——flannel："></a>跨节点容器网络方案——flannel：</h3><p>基于 NAT 的容器网络模型在微服务架构下有两个问题，一个是 IP 重叠，一个是端口冲突，需要通过 Overlay 网络的机制保持跨节点的连通性。<br>flannel使用UDP实现Overlay：<br>每一台物理机上运行一个flannel进程，创建出一个flannel.1网卡，所有发到该网卡的包会被flannel进程封装在UDP包里，外层加上源、目物理机IP，发送给目的物理机上的flannel进程处理，拆封UDP包，通过目的物理机的flannel.1网卡发送出去。由于是用户态对数据包进行封装，会有性能损耗。<br>flannel使用VXLAN实现Overlay：<br>通过内核netlink机制创建一个VTEP网卡flannel.1，物理机A将数据包发送到flannel.1进行封装，转发到物理机B的flannel.1网卡进行解包，变成内部网络包，再通过物理机网桥转发到容器B内部； VXLAN 在内核态封装， 性能更好一些。</p>
+<h3 id="容器网络——Calico："><a href="#容器网络——Calico：" class="headerlink" title="容器网络——Calico："></a>容器网络——Calico：</h3><p>设计思路：不依赖Overlay网络，不引入额外的网络损耗，利用物理机做路由器，使用三层网络的路由转发实现容器间通信。<br>Calico组件：<br>路由配置组件：每台物理机上有一个 agent，当创建和删除容器的时候，配置一条指向该容器的路由。这个 agent 在 Calico 中称为 Felix。<br>路由广播组件BGP Speaker：将该节点的路由信息进行广播；<br>安全策略组件：控制任意容器网络的连通；<br>BGP Route Reflector：节点数多时，为降低网络复杂性，BGP Speaker会直连一个BGP Route Reflector，让它负责广播全网路由信息；规模更大时，使用多个 BGP Router Reflector，每个 BGP Router Reflector 管一部分，服务器和 BGP Router Reflector 之间使用的是数据中心内部的路由协议 iBGP，BGP Router Reflector 之间使用的是数据中心之间的路由协议 eBGP。<br>跨网段访问问题：Calico的IPIP模式，在两台物理机直接建立隧道，容器IP作为乘客协议放在隧道内，物理机IP作为承载协议。不管外层的 IP 通过传统的物理网络，走多少跳到达目标物理机，从隧道两端看起来，物理机 A 的下一跳就是物理机 B，从而实现了容器网络的跨网段访问。</p>
 
             </article>
             <hr>
@@ -209,7 +205,7 @@
                     
                       <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C/">网络</a>
                     
-                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C/%E7%A7%BB%E5%8A%A8%E7%BD%91%E7%BB%9C/">移动网络</a>
+                      <a class="hover-with-bg" href="/categories/%E7%BD%91%E7%BB%9C/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C/">容器网络</a>
                     
                   </div>
                 
@@ -230,9 +226,9 @@
                   <div class="post-prev col-6">
                     
                     
-                      <a href="/2020/11/14/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A26-28%E8%AE%B2/">
+                      <a href="/2020/11/14/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A32-36%E8%AE%B2/">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">《趣谈网络协议》学习总结：26-28讲</span>
+                        <span class="hidden-mobile">《趣谈网络协议》学习总结：32-36讲</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -240,8 +236,8 @@
                   <div class="post-next col-6">
                     
                     
-                      <a href="/2020/10/31/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A21-22%E8%AE%B2/">
-                        <span class="hidden-mobile">《趣谈网络协议》学习总结：21-22讲</span>
+                      <a href="/2020/11/14/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A26-28%E8%AE%B2/">
+                        <span class="hidden-mobile">《趣谈网络协议》学习总结：26-28讲</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -439,7 +435,7 @@
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "《趣谈网络协议》学习总结：23-25讲&nbsp;",
+        "《趣谈网络协议》学习总结：28-31讲&nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,
