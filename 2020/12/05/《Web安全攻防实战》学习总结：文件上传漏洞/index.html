@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    852 字
+                    1.7k 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    10
+                    19
                      分钟
                   </span>
                 
@@ -183,7 +183,7 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2020年12月13日 下午
+                  本文最后更新于：2020年12月20日 晚上
                 
               </p>
             
@@ -192,6 +192,9 @@
 <h2 id="2、一句话木马"><a href="#2、一句话木马" class="headerlink" title="2、一句话木马"></a>2、一句话木马</h2><h3 id="2-1-php一句话木马"><a href="#2-1-php一句话木马" class="headerlink" title="2.1 php一句话木马"></a>2.1 php一句话木马</h3><pre><code class="hljs plain">&lt;?php @eval($_POST[&#39;hacker&#39;]);?&gt;</code></pre>
 <p>获取post请求中hacker字段的值，并将该值转换为php代码执行；</p>
 <h2 id="3、后缀名绕过"><a href="#3、后缀名绕过" class="headerlink" title="3、后缀名绕过"></a>3、后缀名绕过</h2><h3 id="3-1-php文件后缀名绕过"><a href="#3-1-php文件后缀名绕过" class="headerlink" title="3.1 php文件后缀名绕过"></a>3.1 php文件后缀名绕过</h3><p>apache、nginx等web服务器会加载一些语言解析器模块，如python、php、asp等，当某个特定的文件后缀名被限制上传的时候，我们就可以根据web server的解析原理，修改文件后缀名，达到绕过限制的目的，但不是所有的后缀名都能被web server解析，下面通过实战模拟探究下绕过的原理</p>
+<h2 id="4、Windows文件流特性绕过"><a href="#4、Windows文件流特性绕过" class="headerlink" title="4、Windows文件流特性绕过"></a>4、Windows文件流特性绕过</h2><p>Windows平台使用NTFS文件流，NTFS环境一个文件默认使用的是未命名文件流，同时可创建其他命令的文件流，Windows资源管理器默认不显示出文件的命名文件流。举例：<br>1）在任一NTFS分区下打开CMD命令提示符，输入echo abcde&gt;&gt;a.txt:b.txt，则在当前目录下会生成一个名为a.txt的文件，但文件的大小为0字节，打开后也无任何内容，只有输入命令：notepad a.txt:b.txt 才能看见写入的abcde<br>2）在上边的命令中，a.txt可以不存在，也可以是某个已存的文件，文件格式无所谓，无论是.txt还是.jpg|.exe|.asp都行；b.txt也可以任意指定文件名以及后缀名。（可以将任意文本信息隐藏于任意文件中，只要不泄露冒号后的虚拟文件名(即b.txt)，别人是根本不会查看到隐藏信息的）<br>3）包含隐藏信息的文件仍然可以继续隐藏其它的内容，对比上例，我们仍然可以使用命令echo 12345&gt;&gt;a.txt:c.txt　给a.txt建立新的隐藏信息的流文件，使用命令notepad a.txt:c.txt　打开后会发现12345这段信息，而abcde仍然存在于a.txt:b.txt中丝毫不受影响。<br>当我们访问a.asp::$DATA 时，就是请求 a.asp 本身的数据，如果a.asp 还包含了其他的数据流，比如 a.asp:lake2.asp，请求 a.asp:lake2.asp::$DATA，则是请求a.asp中的流数据lake2.asp的流数据内容。<br>例如当.php后缀当文件类型被黑名单限制时，可以通过拦截数据包，将文件名修改为shell.php::$DATA当方式进行绕过。</p>
+<h2 id="00阶段绕过"><a href="#00阶段绕过" class="headerlink" title="%00阶段绕过"></a>%00阶段绕过</h2><p>如果后端在处理上传文件的保存过程，是以路径拼接的方式，且路径是从前端获取，就可以采取路径截断的方式绕过白名单。具体手法是利用burpsuite，在我们想要截断的位置，进入十六进制，添加00截断符号。具体实现见实战模拟。</p>
+<h2 id="文件头检测绕过"><a href="#文件头检测绕过" class="headerlink" title="文件头检测绕过"></a>文件头检测绕过</h2><p>每种文件头格式都有对应的十六进制和自负的编码形式。比如png格式的文件头标识符是89 50 4E 47，git格式的文件头标识符是47 49 46 38。在面对具有文件内容检测的上传功能时，我们可以将攻击代码和图片等文件进行聚合，实现既满足文件头检测，又可成功执行代码的效果。</p>
 <h2 id="实战模拟"><a href="#实战模拟" class="headerlink" title="实战模拟"></a>实战模拟</h2><h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><pre><code class="hljs plain"># 第一次启动
 docker pull registry.cn-shanghai.aliyuncs.com&#x2F;yhskc&#x2F;bwapp
 docker run -d -p 0.0.0.0:80:80 registry.cn-shanghai.aliyuncs.com&#x2F;yhskc&#x2F;bwapp
@@ -211,6 +214,9 @@ curl -d &quot;hacker&#x3D;echo getcwd();&quot; http:&#x2F;&#x2F;127.0.0.1:8888&#
 <pre><code class="hljs plain">vim &#x2F;etc&#x2F;apache2&#x2F;mods-enabled&#x2F;php5.conf</code></pre>
 
 <p><img src="/img/phpconf.png" srcset="/img/loading.gif" alt="fileupload"><br>通过配置文件可发现，php、php3、php5、phptml等文件后缀都可以被apache服务器解析，这也就是为什么刚刚上传的php3文件可被执行，php30不能被执行的原因。了解了文件名后缀的绕过原理，我们就可以通过上传不同的后缀名文件来达到文件后缀名限制绕过的目的。</p>
+<h3 id="00截断绕过"><a href="#00截断绕过" class="headerlink" title="%00截断绕过"></a>%00截断绕过</h3><h3 id="文件头检测绕过-1"><a href="#文件头检测绕过-1" class="headerlink" title="文件头检测绕过"></a>文件头检测绕过</h3><p>以php语言为例，首先准备一个普通的png格式文件，查看文件内容，文件头标志符号是完整的：<br><img src="/img/filehead1.png" srcset="/img/loading.gif" alt="fileupload"><br>再准备一个用于测试的php文件，功能是输出‘test’字符串：<br><img src="/img/filehead2.png" srcset="/img/loading.gif" alt="fileupload"><br>将php文件内容追加到png文件内：</p>
+<pre><code class="hljs plain">cat test.php &gt;&gt; filetype.png</code></pre>
+<p><img src="/img/filehead3.png" srcset="/img/loading.gif" alt="fileupload"><br>利用php，解析png文件，php代码被成功执行，说明我们可以通过把图片和代码进行聚合的方式，让它既满足文件头的标准校验，又满足代码的执行。<br><img src="/img/filehead4.png" srcset="/img/loading.gif" alt="fileupload"></p>
 
             </article>
             <hr>
