@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    1.7k 字
+                    1.9k 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    20
+                    22
                      分钟
                   </span>
                 
@@ -183,7 +183,7 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2021年1月1日 下午
+                  本文最后更新于：2021年1月2日 下午
                 
               </p>
             
@@ -216,7 +216,8 @@ curl -d &quot;hacker&#x3D;echo getcwd();&quot; http:&#x2F;&#x2F;127.0.0.1:8888&#
 <pre><code class="hljs plain">vim &#x2F;etc&#x2F;apache2&#x2F;mods-enabled&#x2F;php5.conf</code></pre>
 
 <p><img src="/img/phpconf.png" srcset="/img/loading.gif" alt="fileupload"><br>通过配置文件可发现，php、php3、php5、phptml等文件后缀都可以被apache服务器解析，这也就是为什么刚刚上传的php3文件可被执行，php30不能被执行的原因。了解了文件名后缀的绕过原理，我们就可以通过上传不同的后缀名文件来达到文件后缀名限制绕过的目的。</p>
-<h2 id="00截断绕过"><a href="#00截断绕过" class="headerlink" title="%00截断绕过"></a>%00截断绕过</h2><h2 id="文件头检测绕过"><a href="#文件头检测绕过" class="headerlink" title="文件头检测绕过"></a>文件头检测绕过</h2><p>以php语言为例，首先准备一个普通的png格式文件，查看文件内容，文件头标志符号是完整的：<br><img src="/img/filehead.png" srcset="/img/loading.gif" alt="fileupload"><br>再准备一个用于测试的php文件，功能是输出‘test’字符串：<br><img src="/img/filehead2.png" srcset="/img/loading.gif" alt="fileupload"><br>将php文件内容追加到png文件内：</p>
+<h2 id="00截断绕过"><a href="#00截断绕过" class="headerlink" title="%00截断绕过"></a>%00截断绕过</h2><p>首先上传shell.php.jpg，文件可成功上传。<br><img src="/img/jieduan2.png" srcset="/img/loading.gif" alt="fileupload"><br><img src="/img/jieduan1.png" srcset="/img/loading.gif" alt="fileupload"><br>由于这个上传点的文件路径和文件名可控，因此考虑在php后进行截断，实现我们要上传的文件类型，同时满足文件类型校验。<br>首先利用burpsuite拦截上传请求，利用16进制输入文件截断符 00，因为键盘输入不了这个符号；同时便于查找位置，我们输入 空格（16进制数是20），便于查找需要修改的位置。将 空格20 修改为 00进行截断。可发现空格消失，同时在png后面移动光标时会发现存在一个隐藏字符，即需要移动两次才到达 .jpg 位置。<br><img src="/img/jieduan3.png" srcset="/img/loading.gif" alt="fileupload"><br><img src="/img/jieduan4.png" srcset="/img/loading.gif" alt="fileupload"><br><img src="/img/jieduan5.png" srcset="/img/loading.gif" alt="fileupload"><br><img src="/img/jieduan6.png" srcset="/img/loading.gif" alt="fileupload"><br>取消burpsuite拦截，文件成功上传，点击here查看，文件名被成功截断且修改为shell.png<br><img src="/img/jieduan7.png" srcset="/img/loading.gif" alt="fileupload"></p>
+<h2 id="文件头检测绕过"><a href="#文件头检测绕过" class="headerlink" title="文件头检测绕过"></a>文件头检测绕过</h2><p>以php语言为例，首先准备一个普通的png格式文件，查看文件内容，文件头标志符号是完整的：<br><img src="/img/filehead.png" srcset="/img/loading.gif" alt="fileupload"><br>再准备一个用于测试的php文件，功能是输出‘test’字符串：<br><img src="/img/filehead2.png" srcset="/img/loading.gif" alt="fileupload"><br>将php文件内容追加到png文件内：</p>
 <pre><code class="hljs plain">cat test.php &gt;&gt; filetype.png</code></pre>
 <p><img src="/img/filehead3.png" srcset="/img/loading.gif" alt="fileupload"><br>利用php，解析png文件，php代码被成功执行，说明我们可以通过把图片和代码进行聚合的方式，让它既满足文件头的标准校验，又满足代码的执行。<br><img src="/img/filehead4.png" srcset="/img/loading.gif" alt="fileupload"></p>
 
