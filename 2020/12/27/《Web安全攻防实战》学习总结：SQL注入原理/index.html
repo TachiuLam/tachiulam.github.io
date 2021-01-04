@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    376 字
+                    486 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    4
+                    5
                      分钟
                   </span>
                 
@@ -183,7 +183,7 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2020年12月27日 晚上
+                  本文最后更新于：2021年1月4日 晚上
                 
               </p>
             
@@ -199,8 +199,11 @@
 <h3 id="performance-schema库"><a href="#performance-schema库" class="headerlink" title="performance_schema库"></a>performance_schema库</h3><p>内存数据库，数据放在内存中直接操作的数据库。主要用于提高应用读写性能。</p>
 <h3 id="sys库"><a href="#sys库" class="headerlink" title="sys库"></a>sys库</h3><p>基于IP或用户查询资源使用情况。以及表的访问信息等。</p>
 <h2 id="SQl注入原理"><a href="#SQl注入原理" class="headerlink" title="SQl注入原理"></a>SQl注入原理</h2><p>SQL注入是发生于应用程序与数据库层的安全漏洞。如用户输入的数据被构造成恶意的SQL代码，Web应用又未对动态构造的SQL语句使用的参数进行审查，则会引发SQL注入。</p>
-<h3 id="GET型SQL注入漏洞"><a href="#GET型SQL注入漏洞" class="headerlink" title="GET型SQL注入漏洞"></a>GET型SQL注入漏洞</h3><p>GET方法提交的内容会显示在网页URL上，通过对URL连接进行构造，获得超出权限信息的内容。</p>
-<h3 id="GET型漏洞实战"><a href="#GET型漏洞实战" class="headerlink" title="GET型漏洞实战"></a>GET型漏洞实战</h3>
+<h3 id="GET型SQL注入漏洞"><a href="#GET型SQL注入漏洞" class="headerlink" title="GET型SQL注入漏洞"></a>GET型SQL注入漏洞</h3><p>GET方法提交的内容会显示在网页URL上，通过对URL连接进行构造，获得超出权限信息的内容。<br>测试字段数量及回显的字段位置，替换选项，获取“使用的数据库用户”、“使用的数据库名称”、“当前数据库版本”、“当前使用的数据库表”</p>
+<pre><code class="hljs plain">&#39;union select 1,user(),table_name,database(),version(),6,7 from information_schema.tables where table_schema&#x3D;database(); --+</code></pre>
+
+<h3 id="POST型SQL注入漏洞"><a href="#POST型SQL注入漏洞" class="headerlink" title="POST型SQL注入漏洞"></a>POST型SQL注入漏洞</h3><p>注入信息存储于HTTP实体内容而不是URL，通过改造实体内容，达到实际执行的SQL语句获取更多信息的目的。</p>
+
             </article>
             <hr>
             <div>
