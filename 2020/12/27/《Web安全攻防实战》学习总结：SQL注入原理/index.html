@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    486 字
+                    751 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    5
+                    8
                      分钟
                   </span>
                 
@@ -183,7 +183,7 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2021年1月5日 晚上
+                  本文最后更新于：2021年1月8日 晚上
                 
               </p>
             
@@ -203,6 +203,15 @@
 <pre><code class="hljs plain">&#39;union select 1,user(),table_name,database(),version(),6,7 from information_schema.tables where table_schema&#x3D;database(); --+</code></pre>
 
 <h3 id="POST型SQL注入漏洞"><a href="#POST型SQL注入漏洞" class="headerlink" title="POST型SQL注入漏洞"></a>POST型SQL注入漏洞</h3><p>注入信息存储于HTTP实体内容而不是URL，通过改造实体内容，达到实际执行的SQL语句获取更多信息的目的。</p>
+<h2 id="5种不同的注入类型"><a href="#5种不同的注入类型" class="headerlink" title="5种不同的注入类型"></a>5种不同的注入类型</h2><h3 id="Boolean-based-blind-SQL-injection（布尔型注入）"><a href="#Boolean-based-blind-SQL-injection（布尔型注入）" class="headerlink" title="Boolean-based blind SQL injection（布尔型注入）"></a>Boolean-based blind SQL injection（布尔型注入）</h3><pre><code class="hljs plain">?id&#x3D;1 and substring(version(),1,1)&#x3D;5</code></pre>
+<p>如果服务端MySQL版本是5.X，那返回的内容就和正常请求一样。</p>
+<h3 id="UNION-query-SQL-injection（可联合查询注入）"><a href="#UNION-query-SQL-injection（可联合查询注入）" class="headerlink" title="UNION query SQL injection（可联合查询注入）"></a>UNION query SQL injection（可联合查询注入）</h3><pre><code class="hljs plain">?id&#x3D;1 union all select schema_name from information_schema.schemata</code></pre>
+<p>最快捷的方法，通过union查询获取所有想要的数据，前提是返回中会携带SQL执行后查询到的内容，利用难度较大</p>
+<h3 id="Time-based-blind-SQL-injection（基于时间延迟注入）"><a href="#Time-based-blind-SQL-injection（基于时间延迟注入）" class="headerlink" title="Time-based blind SQL injection（基于时间延迟注入）"></a>Time-based blind SQL injection（基于时间延迟注入）</h3><pre><code class="hljs plain">select * from user where id&#x3D;&#39;4&#39; and sleep(3);</code></pre>
+<p>通过判断请求的响应时间，判断SQL是否成功执行，常用于页面无回显的场景</p>
+<h3 id="Error-based-SQL-injection（报错型注入）"><a href="#Error-based-SQL-injection（报错型注入）" class="headerlink" title="Error-based SQL injection（报错型注入）"></a>Error-based SQL injection（报错型注入）</h3><p>如果后端能返回SQL报错信息，则考虑使用报错型注入，如利用group by的duplicate entry错误。</p>
+<h3 id="Stacked-querier-SQL-injection（可多语句查询注入）"><a href="#Stacked-querier-SQL-injection（可多语句查询注入）" class="headerlink" title="Stacked querier SQL injection（可多语句查询注入）"></a>Stacked querier SQL injection（可多语句查询注入）</h3><pre><code class="hljs plain">?id&#x3D;1;update t set name &#x3D;&#39;a&#39; where id &#x3D;1</code></pre>
+<p>能执行多条查询语句，非常危险，意味着可直接更新数据库。</p>
 
             </article>
             <hr>
