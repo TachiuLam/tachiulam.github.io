@@ -157,26 +157,78 @@
     
     
       <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2020/12/27/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%EF%BC%88%E4%B8%8A%EF%BC%89/" target="_self">
-          <img src="/img/websecurity.png" srcset="/img/loading.gif" alt="《Web攻防安全实战》学习总结：SQL注入实战（上）">
+        <a href="/2021/01/09/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%E2%80%94%E2%80%94HTTP%E5%A4%B4%E7%9B%B2%E6%B3%A8/" target="_self">
+          <img src="/img/websecurity.png" srcset="/img/loading.gif" alt="《Web攻防安全实战》学习总结：SQL注入实战——HTTP头盲注">
         </a>
       </div>
     
     <div class="col-12 col-md-8 mx-auto index-info">
-      <a class="index-header" href="/2020/12/27/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%EF%BC%88%E4%B8%8A%EF%BC%89/">《Web攻防安全实战》学习总结：SQL注入实战（上）</a>
+      <a class="index-header" href="/2021/01/09/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%E2%80%94%E2%80%94HTTP%E5%A4%B4%E7%9B%B2%E6%B3%A8/">《Web攻防安全实战》学习总结：SQL注入实战——HTTP头盲注</a>
 
-      <a href="/2020/12/27/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%EF%BC%88%E4%B8%8A%EF%BC%89/" class="index-excerpt">
+      <a href="/2021/01/09/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%E2%80%94%E2%80%94HTTP%E5%A4%B4%E7%9B%B2%E6%B3%A8/" class="index-excerpt">
         
         
           
         
-        <div>SQL注入实战时间盲注时间盲注常用函数substr（a,b,c）：从b位置开始，截取字符串a的c长度
+        <div>HTTP头盲注HTTP头部注入针对HTTP的请求头，如果不进行过滤和转义，直接与数据库进行交互，就容易被利用进行SQL注入攻击，即HTTP头注入。
+HTTP头盲注实战判断注入点选择bwapp相应的漏洞靶场SQL Injection - Stored (User-Agent)，页面会记录登录设备的UA和IP。burpsuite抓包修改UA值，发现UA可控，且添加单引号判断存在注入点：通过页面判断，i</div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>&nbsp;2021-01-09
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Web%E5%AE%89%E5%85%A8/">Web安全</a>
+            
+              <a href="/categories/Web%E5%AE%89%E5%85%A8/SQL%E6%B3%A8%E5%85%A5/">SQL注入</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E5%AE%89%E5%85%A8/">安全</a>
+            
+              <a href="/tags/Web%E5%AE%89%E5%85%A8/">Web安全</a>
+            
+          </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2021/01/08/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%E2%80%94%E2%80%94%E6%97%B6%E9%97%B4%E7%9B%B2%E6%B3%A8/" target="_self">
+          <img src="/img/websecurity.png" srcset="/img/loading.gif" alt="《Web攻防安全实战》学习总结：SQL注入实战——利用时间盲注绕过无报错无回显场景">
+        </a>
+      </div>
+    
+    <div class="col-12 col-md-8 mx-auto index-info">
+      <a class="index-header" href="/2021/01/08/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%E2%80%94%E2%80%94%E6%97%B6%E9%97%B4%E7%9B%B2%E6%B3%A8/">《Web攻防安全实战》学习总结：SQL注入实战——利用时间盲注绕过无报错无回显场景</a>
+
+      <a href="/2021/01/08/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%E2%80%94%E2%80%94%E6%97%B6%E9%97%B4%E7%9B%B2%E6%B3%A8/" class="index-excerpt">
+        
+        
+          
+        
+        <div>时间盲注时间盲注常用函数substr（a,b,c）：从b位置开始，截取字符串a的c长度
 count（）：计算总数
 ascii（）：返回字符的ASCII码
 length（）：返回字符串的长度
 left（a,b）：从左到右截取字符串a的前b个字符
 sleep（n）：将程序挂起n秒
-World War Z电影存在
+
+时间盲注实战World War Z电影存在
 # 判断是否存在时间盲注
 http:&#x2F;&#x2F;bwapp.co</div>
       </a>
@@ -184,7 +236,7 @@ http:&#x2F;&#x2F;bwapp.co</div>
       <div class="index-btm post-metas">
         
           <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>&nbsp;2020-12-27
+            <i class="iconfont icon-date"></i>&nbsp;2021-01-08
           </div>
         
         
@@ -607,59 +659,11 @@ Linux多任务：linux系统</div>
     </div>
   </div>
 
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2020/10/31/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A21-22%E8%AE%B2/" target="_self">
-          <img src="/img/network.png" srcset="/img/loading.gif" alt="《趣谈网络协议》学习总结：21-22讲">
-        </a>
-      </div>
-    
-    <div class="col-12 col-md-8 mx-auto index-info">
-      <a class="index-header" href="/2020/10/31/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A21-22%E8%AE%B2/">《趣谈网络协议》学习总结：21-22讲</a>
-
-      <a href="/2020/10/31/%E3%80%8A%E8%B6%A3%E8%B0%88%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9A21-22%E8%AE%B2/" class="index-excerpt">
-        
-        
-          
-        
-        <div>数据中心：1、边界路由器（Border Router）：数据中心的入口和出口也是路由器，由于在数据中心的边界，称为边界路由器（Border Router），边界路由器会连接多个运营商网络。2、网卡绑定：多个网卡、多个网线利用LACP（Link Aggregation Control Protocol）协议聚合成一个网卡、一个网线。3、交换机高可用方式：1）使用STD协议连接，形成主备；2）利用堆叠</div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>&nbsp;2020-10-31
-          </div>
-        
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-category"></i>
-            
-              <a href="/categories/%E7%BD%91%E7%BB%9C/">网络</a>
-            
-              <a href="/categories/%E7%BD%91%E7%BB%9C/%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%BF%83/">数据中心</a>
-            
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E7%BD%91%E7%BB%9C/">网络</a>
-            
-          </div>
-        
-      </div>
-    </div>
-  </div>
-
 
 
   <nav aria-label="navigation">
     <span class="pagination" id="pagination">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="iconfont icon-arrowright"></i></a>
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="iconfont icon-arrowright"></i></a>
     </span>
   </nav>
   
