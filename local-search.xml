@@ -4,6 +4,33 @@
   
   
   <entry>
+    <title>Go 测试用例</title>
+    <link href="/2022/07/03/Go-%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B/"/>
+    <url>/2022/07/03/Go-%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B/</url>
+    
+    <content type="html"><![CDATA[<h3 id="Go-测试用例"><a href="#Go-测试用例" class="headerlink" title="Go 测试用例"></a>Go 测试用例</h3><h4 id="前置条件："><a href="#前置条件：" class="headerlink" title="前置条件："></a>前置条件：</h4><h5 id="1、文件名须以”-test-go”结尾"><a href="#1、文件名须以”-test-go”结尾" class="headerlink" title="1、文件名须以”_test.go”结尾"></a>1、文件名须以”_test.go”结尾</h5><h5 id="2、方法名须以”Test”打头，并且形参为-t-testing-T"><a href="#2、方法名须以”Test”打头，并且形参为-t-testing-T" class="headerlink" title="2、方法名须以”Test”打头，并且形参为 (t *testing.T)"></a>2、方法名须以”Test”打头，并且形参为 (t *testing.T)</h5><h5 id="举例：-hello-test-go"><a href="#举例：-hello-test-go" class="headerlink" title="举例：/hello_test.go"></a>举例：/hello_test.go</h5><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<span class="hljs-keyword">import</span> (<span class="hljs-string">"testing"</span><span class="hljs-string">"fmt"</span>)<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestHello</span><span class="hljs-params">(t *testing.T)</span></span> &#123;fmt.Println(<span class="hljs-string">"TestHello"</span>)&#125;<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestWorld</span><span class="hljs-params">(t *testing.T)</span></span> &#123;fmt.Println(<span class="hljs-string">"TestWorld"</span>)&#125;</code></pre><h5 id="测试整个文件："><a href="#测试整个文件：" class="headerlink" title="测试整个文件："></a>测试整个文件：</h5><pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> go <span class="hljs-built_in">test</span> -v hello_test.go</span></code></pre><pre><code class="hljs plain">&#x3D;&#x3D;&#x3D; RUN   TestHelloTestHello--- PASS: TestHello (0.00s)&#x3D;&#x3D;&#x3D; RUN   TestWorldTestWorld--- PASS: TestWorld (0.00s)PASSok  command-line-arguments0.007s</code></pre><p>测试单个函数：</p><pre><code class="hljs shell"><span class="hljs-meta">$</span><span class="bash"> go <span class="hljs-built_in">test</span> -v hello_test.go -test.run TestHello</span></code></pre><pre><code class="hljs plain">&#x3D;&#x3D;&#x3D; RUN   TestHelloTestHello--- PASS: TestHello (0.00s)PASSok  command-line-arguments0.008s</code></pre>]]></content>
+    
+    
+    <categories>
+      
+      <category>Go</category>
+      
+      <category>Test</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Go</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>《Web攻防安全实战》学习总结：SQL注入实战—-OOB注入</title>
     <link href="/2021/03/27/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%E2%80%94-OOB%E6%B3%A8%E5%85%A5/"/>
     <url>/2021/03/27/%E3%80%8AWeb%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2%E5%AE%9E%E6%88%98%E3%80%8B%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93%EF%BC%9ASQL%E6%B3%A8%E5%85%A5%E5%AE%9E%E6%88%98%E2%80%94-OOB%E6%B3%A8%E5%85%A5/</url>
