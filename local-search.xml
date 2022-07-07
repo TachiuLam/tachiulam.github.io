@@ -4,6 +4,31 @@
   
   
   <entry>
+    <title>Python项目打包为whl包</title>
+    <link href="/2022/07/07/Python%E9%A1%B9%E7%9B%AE%E6%89%93%E5%8C%85%E4%B8%BAwhl%E5%8C%85/"/>
+    <url>/2022/07/07/Python%E9%A1%B9%E7%9B%AE%E6%89%93%E5%8C%85%E4%B8%BAwhl%E5%8C%85/</url>
+    
+    <content type="html"><![CDATA[<h3 id="Python项目打包为whl包"><a href="#Python项目打包为whl包" class="headerlink" title="Python项目打包为whl包"></a>Python项目打包为whl包</h3><h4 id="1、进入要打包的项目根目录下，创建setup-py："><a href="#1、进入要打包的项目根目录下，创建setup-py：" class="headerlink" title="1、进入要打包的项目根目录下，创建setup.py："></a>1、进入要打包的项目根目录下，创建setup.py：</h4><pre><code class="hljs python"><span class="hljs-keyword">from</span> setuptools <span class="hljs-keyword">import</span> setup, find_packages setup(    name = <span class="hljs-string">"driver"</span>,    version = <span class="hljs-string">"0.1"</span>,    packages = find_packages(),    <span class="hljs-comment">#目标文件</span>    py_modeles = <span class="hljs-string">'driver_classification.py'</span>,    <span class="hljs-comment">#excel文件</span>    data_file = <span class="hljs-string">'driver_model_data.xlsx'</span>,    include_package_data = <span class="hljs-literal">True</span>,    <span class="hljs-comment">#包含所有.xlsx文件</span>    package_data = &#123;)</code></pre><h5 id="setup函数各参数详解："><a href="#setup函数各参数详解：" class="headerlink" title="setup函数各参数详解："></a>setup函数各参数详解：</h5><pre><code class="hljs plain">--name              包名称  --version (-V)      包版本  --author            程序的作者  --author_email      程序的作者的邮箱地址  --maintainer        维护者  --maintainer_email  维护者的邮箱地址  --url               程序的官网地址  --license           程序的授权信息  --description       程序的简单描述  --long_description  程序的详细描述  --platforms         程序适用的软件平台列表  --classifiers       程序的所属分类列表  --keywords          程序的关键字列表  --packages  需要打包的目录列表  --py_modules  需要打包的python文件列表  --download_url  程序的下载地址  --cmdclass    --data_files  打包时需要打包的数据文件，如图片，配置文件等  --scripts  安装时需要执行的脚步列表</code></pre><h4 id="2、打包文件"><a href="#2、打包文件" class="headerlink" title="2、打包文件"></a>2、打包文件</h4><pre><code class="hljs python"><span class="hljs-comment"># 打包为egg文件</span>python setup.py bdist_egg<span class="hljs-comment"># 打包为whl文件</span>python setup.py bdist_wheel</code></pre><h5 id="运行后会在当前目录多出3个文件夹：build、dist、driver-egg-info"><a href="#运行后会在当前目录多出3个文件夹：build、dist、driver-egg-info" class="headerlink" title="运行后会在当前目录多出3个文件夹：build、dist、driver.egg-info"></a>运行后会在当前目录多出3个文件夹：build、dist、driver.egg-info</h5><h5 id="打包好后的whl文件在dist文件夹内，进入dist文件夹中安装whl文件："><a href="#打包好后的whl文件在dist文件夹内，进入dist文件夹中安装whl文件：" class="headerlink" title="打包好后的whl文件在dist文件夹内，进入dist文件夹中安装whl文件："></a>打包好后的whl文件在dist文件夹内，进入dist文件夹中安装whl文件：</h5><pre><code class="hljs python">pip install driver<span class="hljs-number">-0.1</span>-py3-none-any.whl</code></pre>]]></content>
+    
+    
+    <categories>
+      
+      <category>Python</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Python</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Go 测试用例</title>
     <link href="/2022/07/03/Go-%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B/"/>
     <url>/2022/07/03/Go-%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B/</url>

@@ -17,7 +17,7 @@
   <meta name="description" content="">
   <meta name="author" content="Tachiu Lam">
   <meta name="keywords" content="">
-  <title>标签 - Tachiu Lam</title>
+  <title>Python项目打包为whl包 - Tachiu Lam</title>
 
   <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
 <link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
@@ -46,7 +46,7 @@
 
 
 <body>
-  <header style="height: 60vh;">
+  <header style="height: 70vh;">
     <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
   <div class="container">
     <a class="navbar-brand"
@@ -119,7 +119,7 @@
 </nav>
 
     <div class="view intro-2" id="background" parallax=true
-         style="background: url('/img/77.png') no-repeat center center;
+         style="background: url('/img/py3.png') no-repeat center center;
            background-size: cover;">
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
@@ -128,6 +128,38 @@
               
             </span>
 
+            
+              
+                <div class="mt-3 post-meta">
+                  <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+                  <time datetime="2022-07-07 23:18">
+                    2022年7月7日 晚上
+                  </time>
+                </div>
+              
+
+              <div class="mt-1">
+                
+                  
+                  <span class="post-meta mr-2">
+                    <i class="iconfont icon-chart"></i>
+                    312 字
+                  </span>
+                
+
+                
+                  
+                  <span class="post-meta mr-2">
+                      <i class="iconfont icon-clock-fill"></i>
+                    
+                    
+                    3
+                     分钟
+                  </span>
+                
+
+                
+              </div>
             
           </div>
 
@@ -139,24 +171,126 @@
 
   <main>
     
-      <div class="container nopadding-md">
-        <div class="py-5" id="board"
-          >
-          
-          <div class="container">
-            <div class="row">
-              <div class="col-12 col-md-10 m-auto">
+      
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-md">
+      <div class="container nopadding-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <div class="post-content mx-auto" id="post">
+            
+              <p class="note note-info">
                 
+                  本文最后更新于：2022年7月7日 晚上
+                
+              </p>
+            
+            <article class="markdown-body">
+              <h3 id="Python项目打包为whl包"><a href="#Python项目打包为whl包" class="headerlink" title="Python项目打包为whl包"></a>Python项目打包为whl包</h3><h4 id="1、进入要打包的项目根目录下，创建setup-py："><a href="#1、进入要打包的项目根目录下，创建setup-py：" class="headerlink" title="1、进入要打包的项目根目录下，创建setup.py："></a>1、进入要打包的项目根目录下，创建setup.py：</h4><pre><code class="hljs python"><span class="hljs-keyword">from</span> setuptools <span class="hljs-keyword">import</span> setup, find_packages
+ 
+setup(
+    name = <span class="hljs-string">"driver"</span>,
+    version = <span class="hljs-string">"0.1"</span>,
+    packages = find_packages(),
+    <span class="hljs-comment">#目标文件</span>
+    py_modeles = <span class="hljs-string">'driver_classification.py'</span>,
+    <span class="hljs-comment">#excel文件</span>
+    data_file = <span class="hljs-string">'driver_model_data.xlsx'</span>,
+    include_package_data = <span class="hljs-literal">True</span>,
+    <span class="hljs-comment">#包含所有.xlsx文件</span>
+    package_data = &#123;
+)</code></pre>
+<h5 id="setup函数各参数详解："><a href="#setup函数各参数详解：" class="headerlink" title="setup函数各参数详解："></a>setup函数各参数详解：</h5><pre><code class="hljs plain">--name              包名称
+  --version (-V)      包版本
+  --author            程序的作者
+  --author_email      程序的作者的邮箱地址
+  --maintainer        维护者
+  --maintainer_email  维护者的邮箱地址
+  --url               程序的官网地址
+  --license           程序的授权信息
+  --description       程序的简单描述
+  --long_description  程序的详细描述
+  --platforms         程序适用的软件平台列表
+  --classifiers       程序的所属分类列表
+  --keywords          程序的关键字列表
+  --packages  需要打包的目录列表
+  --py_modules  需要打包的python文件列表
+  --download_url  程序的下载地址
+  --cmdclass  
+  --data_files  打包时需要打包的数据文件，如图片，配置文件等
+  --scripts  安装时需要执行的脚步列表</code></pre>
+<h4 id="2、打包文件"><a href="#2、打包文件" class="headerlink" title="2、打包文件"></a>2、打包文件</h4><pre><code class="hljs python"><span class="hljs-comment"># 打包为egg文件</span>
+python setup.py bdist_egg
+<span class="hljs-comment"># 打包为whl文件</span>
+python setup.py bdist_wheel</code></pre>
+<h5 id="运行后会在当前目录多出3个文件夹：build、dist、driver-egg-info"><a href="#运行后会在当前目录多出3个文件夹：build、dist、driver-egg-info" class="headerlink" title="运行后会在当前目录多出3个文件夹：build、dist、driver.egg-info"></a>运行后会在当前目录多出3个文件夹：build、dist、driver.egg-info</h5><h5 id="打包好后的whl文件在dist文件夹内，进入dist文件夹中安装whl文件："><a href="#打包好后的whl文件在dist文件夹内，进入dist文件夹中安装whl文件：" class="headerlink" title="打包好后的whl文件在dist文件夹内，进入dist文件夹中安装whl文件："></a>打包好后的whl文件在dist文件夹内，进入dist文件夹中安装whl文件：</h5><pre><code class="hljs python">pip install driver<span class="hljs-number">-0.1</span>-py3-none-any.whl</code></pre>
 
-<div class="text-center tagcloud">
-  <a href="/tags/Django/" style="font-size: 15px; color: #bbe">Django</a> <a href="/tags/Go/" style="font-size: 15px; color: #bbe">Go</a> <a href="/tags/Linux/" style="font-size: 15px; color: #bbe">Linux</a> <a href="/tags/Python/" style="font-size: 15px; color: #bbe">Python</a> <a href="/tags/Web%E5%AE%89%E5%85%A8/" style="font-size: 20px; color: #8ea5dc">Web安全</a> <a href="/tags/%E5%AE%89%E5%85%A8/" style="font-size: 25px; color: #6090c9">安全</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 30px; color: #337ab7">网络</a>
-</div>
-
+            </article>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Python/">Python</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Python/">Python</a>
+                    
+                  </div>
+                
               </div>
+              
+                <p class="note note-warning">本博客所有文章除特别声明外，均采用 <a href="https://zh.wikipedia.org/wiki/Wikipedia:CC_BY-SA_3.0%E5%8D%8F%E8%AE%AE%E6%96%87%E6%9C%AC" target="_blank" rel="nofollow noopener noopener">CC BY-SA 3.0协议</a> 。转载请注明出处！</p>
+              
+              
+                <div class="post-prevnext row">
+                  <div class="post-prev col-6">
+                    
+                    
+                  </div>
+                  <div class="post-next col-6">
+                    
+                    
+                      <a href="/2022/07/03/Go-%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B/">
+                        <span class="hidden-mobile">Go 测试用例</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </div>
+                </div>
+              
             </div>
+
+            
           </div>
         </div>
       </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div id="tocbot"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
     
   </main>
 
@@ -249,6 +383,34 @@
 
 
 
+  
+  <script  src="https://cdn.staticfile.org/tocbot/4.11.1/tocbot.min.js" ></script>
+  <script>
+    $(document).ready(function () {
+      var boardCtn = $('#board-ctn');
+      var boardTop = boardCtn.offset().top;
+
+      tocbot.init({
+        tocSelector: '#tocbot',
+        contentSelector: '.post-content',
+        headingSelector: 'h1,h2,h3,h4,h5,h6',
+        linkClass: 'tocbot-link',
+        activeLinkClass: 'tocbot-active-link',
+        listClass: 'tocbot-list',
+        isCollapsedClass: 'tocbot-is-collapsed',
+        collapsibleClass: 'tocbot-is-collapsible',
+        collapseDepth: 0,
+        scrollSmooth: true,
+        headingsOffset: -boardTop
+      });
+      if ($('.toc-list-item').length > 0) {
+        $('#toc').css('visibility', 'visible');
+      }
+    });
+  </script>
+
+
+
 
 
   <script defer src="https://cdn.staticfile.org/clipboard.js/2.0.6/clipboard.min.js" ></script>
@@ -297,7 +459,7 @@
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "标签&nbsp;",
+        "Python项目打包为whl包&nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,
@@ -340,6 +502,20 @@
   </script>
 
 
+
+  <script  src="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <script>
+    $('#post img:not(.no-zoom img, img[no-zoom]), img[zoom]').each(
+      function () {
+        var element = document.createElement('a');
+        $(element).attr('data-fancybox', 'images');
+        $(element).attr('href', $(this).attr('src'));
+        $(this).wrap(element);
+      }
+    );
+  </script>
 
 
 
