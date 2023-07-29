@@ -17,7 +17,7 @@
   <meta name="description" content="">
   <meta name="author" content="Tachiu Lam">
   <meta name="keywords" content="">
-  <title>drpc的代码生成工具的简单改造 - Tachiu Lam</title>
+  <title>记一次tcp报文分隔问题处理 - Tachiu Lam</title>
 
   <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
 <link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
@@ -119,7 +119,7 @@
 </nav>
 
     <div class="view intro-2" id="background" parallax=true
-         style="background: url('/img/drpc1.png') no-repeat center center;
+         style="background: url('/img/tcp.png') no-repeat center center;
            background-size: cover;">
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
@@ -132,8 +132,8 @@
               
                 <div class="mt-3 post-meta">
                   <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-                  <time datetime="2023-04-26 22:10">
-                    2023年4月26日 晚上
+                  <time datetime="2022-07-29 16:26">
+                    2022年7月29日 下午
                   </time>
                 </div>
               
@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    723 字
+                    855 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    11
+                    10
                      分钟
                   </span>
                 
@@ -183,101 +183,84 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2023年7月26日 晚上
+                  本文最后更新于：2023年7月29日 下午
                 
               </p>
             
             <article class="markdown-body">
-              <h4 id="前文"><a href="#前文" class="headerlink" title="前文"></a>前文</h4><p>由于项目组用了一个轻量的golang rpc框架——drpc，出现了http接口，json字段omitempty无法配置，导致restful接口，字段值是对应类型的零值时，接口不是返回零值，而是直接不返回该字段。如接口预期返回是：</p>
-<pre><code class="hljs plain">&#123;
-  &quot;code&quot;: 0,
-  &quot;message&quot;: &quot;hello world&quot;,
-  &quot;data&quot;: []
-&#125;</code></pre>
-<p>实际drpc的restful服务返回的是：</p>
-<pre><code class="hljs plain">&#123;
-  &quot;message&quot;: &quot;hello world&quot;
-&#125;</code></pre>
-<p>因此研究了下drpc的源码，并进行了相应改造，解决这一问题</p>
-<h4 id="定位"><a href="#定位" class="headerlink" title="定位"></a>定位</h4><p>通过观察pb文件，发现drpc使用的json marshal工具不是内置的encording/json 包，而是 protojson 包<br><img src="/img/drpc2.jpeg" srcset="/img/loading.gif" alt="image"><br>再看protojson 的MarshalOptions源码，就很清晰了，EmitUnpopulated 就是类似json tag的omitempty</p>
-<pre><code class="hljs Go"><span class="hljs-comment">// MarshalOptions is a configurable JSON format marshaler.</span>
-<span class="hljs-keyword">type</span> MarshalOptions <span class="hljs-keyword">struct</span> &#123;
-	pragma.NoUnkeyedLiterals
+              <p>近期开发了一个支持高并发的syslog日志发送工具，手写了一个简单tcp server作为接收端，在打日志的过程中偶然发现了终端打印的日志数据有些不完整，tcp server代码如下：</p>
+<pre><code class="hljs Go"><span class="hljs-keyword">package</span> main
 
-	<span class="hljs-comment">// Multiline specifies whether the marshaler should format the output in</span>
-	<span class="hljs-comment">// indented-form with every textual element on a new line.</span>
-	<span class="hljs-comment">// If Indent is an empty string, then an arbitrary indent is chosen.</span>
-	Multiline <span class="hljs-keyword">bool</span>
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">"bufio"</span>
+	<span class="hljs-string">"fmt"</span>
+	<span class="hljs-string">"net"</span>
+)
 
-	<span class="hljs-comment">// Indent specifies the set of indentation characters to use in a multiline</span>
-	<span class="hljs-comment">// formatted output such that every entry is preceded by Indent and</span>
-	<span class="hljs-comment">// terminated by a newline. If non-empty, then Multiline is treated as true.</span>
-	<span class="hljs-comment">// Indent can only be composed of space or tab characters.</span>
-	Indent <span class="hljs-keyword">string</span>
+<span class="hljs-comment">// TCP Server端（本地调试用）</span>
+<span class="hljs-comment">// 处理函数</span>
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">process</span><span class="hljs-params">(conn net.Conn)</span></span> &#123;
+	<span class="hljs-keyword">defer</span> conn.Close() <span class="hljs-comment">// 关闭连接</span>
+        reader := bufio.NewReader(conn)
+	<span class="hljs-keyword">var</span> buf [<span class="hljs-number">128</span>]<span class="hljs-keyword">byte</span>
+	n, err := reader.Read(buf[:]) <span class="hljs-comment">// 读取数据</span>
+	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;
+		fmt.Println(<span class="hljs-string">"read from client failed, err: "</span>, err)
+		<span class="hljs-keyword">break</span>
+	&#125;
+	recvStr := <span class="hljs-keyword">string</span>(buf[:n])
+	fmt.Println(<span class="hljs-string">"收到Client端发来的数据："</span>, recvStr)
+	<span class="hljs-comment">//conn.Write([]byte(recvStr)) // 发送数据</span>
+&#125;
 
-	<span class="hljs-comment">// AllowPartial allows messages that have missing required fields to marshal</span>
-	<span class="hljs-comment">// without returning an error. If AllowPartial is false (the default),</span>
-	<span class="hljs-comment">// Marshal will return error if there are any missing required fields.</span>
-	AllowPartial <span class="hljs-keyword">bool</span>
-
-	<span class="hljs-comment">// UseProtoNames uses proto field name instead of lowerCamelCase name in JSON</span>
-	<span class="hljs-comment">// field names.</span>
-	UseProtoNames <span class="hljs-keyword">bool</span>
-
-	<span class="hljs-comment">// UseEnumNumbers emits enum values as numbers.</span>
-	UseEnumNumbers <span class="hljs-keyword">bool</span>
-
-	<span class="hljs-comment">// EmitUnpopulated specifies whether to emit unpopulated fields. It does not</span>
-	<span class="hljs-comment">// emit unpopulated oneof fields or unpopulated extension fields.</span>
-	<span class="hljs-comment">// The JSON value emitted for unpopulated fields are as follows:</span>
-	<span class="hljs-comment">//  ╔═══════╤════════════════════════════╗</span>
-	<span class="hljs-comment">//  ║ JSON  │ Protobuf field             ║</span>
-	<span class="hljs-comment">//  ╠═══════╪════════════════════════════╣</span>
-	<span class="hljs-comment">//  ║ false │ proto3 boolean fields      ║</span>
-	<span class="hljs-comment">//  ║ 0     │ proto3 numeric fields      ║</span>
-	<span class="hljs-comment">//  ║ ""    │ proto3 string/bytes fields ║</span>
-	<span class="hljs-comment">//  ║ null  │ proto2 scalar fields       ║</span>
-	<span class="hljs-comment">//  ║ null  │ message fields             ║</span>
-	<span class="hljs-comment">//  ║ []    │ list fields                ║</span>
-	<span class="hljs-comment">//  ║ &#123;&#125;    │ map fields                 ║</span>
-	<span class="hljs-comment">//  ╚═══════╧════════════════════════════╝</span>
-	EmitUnpopulated <span class="hljs-keyword">bool</span>
-
-	<span class="hljs-comment">// Resolver is used for looking up types when expanding google.protobuf.Any</span>
-	<span class="hljs-comment">// messages. If nil, this defaults to using protoregistry.GlobalTypes.</span>
-	Resolver <span class="hljs-keyword">interface</span> &#123;
-		protoregistry.ExtensionTypeResolver
-		protoregistry.MessageTypeResolver
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;
+	listen, err := net.Listen(<span class="hljs-string">"tcp"</span>, <span class="hljs-string">"0.0.0.0:3333"</span>)
+	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;
+		fmt.Println(<span class="hljs-string">"Listen() failed, err: "</span>, err)
+		<span class="hljs-keyword">return</span>
+	&#125;
+	<span class="hljs-keyword">for</span> &#123;
+		conn, err := listen.Accept() <span class="hljs-comment">// 监听客户端的连接请求</span>
+		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;
+			fmt.Println(<span class="hljs-string">"Accept() failed, err: "</span>, err)
+			<span class="hljs-keyword">continue</span>
+		&#125;
+		<span class="hljs-keyword">go</span> process(conn) <span class="hljs-comment">// 启动一个goroutine来处理客户端的连接请求</span>
 	&#125;
 &#125;</code></pre>
-<p>接下来的工作就是让drpc生成的pb代码中，protojson.Marshal 方法使用这个配置。所以再回到drpc源码，找到生成这一段代码的位置：<br><img src="/img/drpc3.jpeg" srcset="/img/loading.gif" alt="image"></p>
-<p>并做如下修改：<br><img src="/img/drpc4.png" srcset="/img/loading.gif" alt="image"></p>
-<p>剩下的工作就是把protoc-gen-go-drpc工具重新编译即可，最终生成的pb文件，protocjson.Marshal方法也成功使用了MarshalOptions配置：<br><img src="/img/drpc5.png" srcset="/img/loading.gif" alt="image"></p>
-<p>附上生成drpc pb代码的镜像</p>
-<pre><code class="hljs plain">FROM golang:1.19-alpine3.16 as builder
-ENV GOPROXY&#x3D;https:&#x2F;&#x2F;goproxy.cn,direct
-
-WORKDIR &#x2F;src
-COPY . &#x2F;src
-
-RUN go mod download -x
-RUN go build -o &#x2F;bin&#x2F;protoc-gen-go cmd&#x2F;protoc-gen-go&#x2F;main.go
-RUN go build -o &#x2F;bin&#x2F;protoc-gen-go-drpc main.go
-
-FROM alpine:3.16
-RUN apk update
-RUN apk add protobuf
-COPY --from&#x3D;builder &#x2F;bin&#x2F;protoc-gen-go-drpc &#x2F;bin
-COPY --from&#x3D;builder &#x2F;bin&#x2F;protoc-gen-go &#x2F;bin
-
-WORKDIR &#x2F;protobuf
-
-ENTRYPOINT protoc --go_out&#x3D;&#x2F;out --go-drpc_out&#x3D;&#x2F;out --proto_path&#x3D;. $(find .&#x2F; -name &#39;*.proto&#39;)
-
-# docker build -f Dockerfile -t tc&#x2F;protoc-drpc .
-# docker run --rm -v $(pwd)&#x2F;protobuf:&#x2F;protobuf -v $(pwd):&#x2F;out tc&#x2F;protoc-drpc</code></pre>
-<h4 id="PS"><a href="#PS" class="headerlink" title="PS"></a>PS</h4><p>debug期间也对protobuf-go工具，做了修改，实现生成的pb文件的字段，json tag 不携带 omitempty，具体修改如下：<br><img src="/img/drpc6.png" srcset="/img/loading.gif" alt="image"></p>
-<p><img src="/img/drpc7.jpeg" srcset="/img/loading.gif" alt="image"><br>最后，非必要还是用grpc这种社区更活跃的框架吧</p>
+<p>按逻辑是每行日志之间会换行，但实际过程中，有几条日志会和上一条粘在一起，而且被截断，现象如下:</p>
+<p><img src="/img/tcp1.jpeg" srcset="/img/loading.gif" alt="image"></p>
+<p>排查后发现，“粘包“是由于，tcp是流传输，会有缓存区，不一定能够及时把消息发出去，像Nagle优化算法会将多次间隔较小、数据量小的数据，合并成一个大的数据块，然后进行封包是，而buf只设置每次读取了128字节。</p>
+<p>google了一下解决办法：</p>
+<ul>
+<li>TCP本身是面向流的，作为网络服务器，如何从这源源不断涌来的数据流中拆分出或者合并出有意义的信息呢？通常会有以下一些常用的方法：</li>
+<li>1、发送端给每个数据包添加包首部，首部中应该至少包含数据包的长度，这样接收端在接收到数据后，通过读取包首部的长度字段，便知道每一个数据包的实际长度了。</li>
+<li>2、发送端将每个数据包封装为固定长度（不够的可以通过补0填充），这样接收端每次从接收缓冲区中读取固定长度的数据就自然而然的把每个数据包拆分开来。</li>
+<li>3、可以在数据包之间设置边界，如添加特殊符号，这样，接收端通过这个边界就可以将不同的数据包拆分开。</li>
+</ul>
+<p>工具发送的日志都是以 \n结尾，且长度不固定，因此选择用分隔符切分，tcp server process函数修改如下：</p>
+<pre><code class="hljs Go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">process</span><span class="hljs-params">(conn net.Conn)</span></span> &#123;
+	<span class="hljs-keyword">defer</span> conn.Close() <span class="hljs-comment">// 关闭连接</span>
+	<span class="hljs-keyword">for</span> &#123;
+		reader := bufio.NewReader(conn)
+		<span class="hljs-keyword">for</span> &#123;
+			data, err := reader.ReadSlice(<span class="hljs-string">'\n'</span>)
+			<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;
+				<span class="hljs-keyword">if</span> err != io.EOF &#123;
+					log.Println(err)
+				&#125; <span class="hljs-keyword">else</span> &#123;
+					fmt.Println(<span class="hljs-string">"read from client failed, err: "</span>, err)
+					<span class="hljs-keyword">break</span>
+				&#125;
+			&#125;
+			fmt.Println(<span class="hljs-string">"收到Client端发来的数据："</span>, <span class="hljs-keyword">string</span>(data))
+		&#125;
+	&#125;
+&#125;</code></pre>
+<p>再次接受日志，就没有截断和数据粘黏的问题啦～<br><img src="/img/tcp2.jpeg" srcset="/img/loading.gif" alt="image"></p>
+<p>ps：使用抓包工具就可以发现，像http是用\r\n去做数据的边界区分的</p>
+<p>最后，“粘包”的时候都是粘了日志的前半部分，而单条日志的后半部分在之后的传输中就神奇的丢失了，这个目前还没找到原因</p>
+<p>编辑做下补充，tcp是流传输，”粘包”两个字刻意加了引号，本意是想指代业务数据的边界处理问题，用词不当，希望不误导各位</p>
 
             </article>
             <hr>
@@ -287,7 +270,7 @@ ENTRYPOINT protoc --go_out&#x3D;&#x2F;out --go-drpc_out&#x3D;&#x2F;out --proto_p
                   <div class="post-meta mr-3">
                     <i class="iconfont icon-category"></i>
                     
-                      <a class="hover-with-bg" href="/categories/go/">go</a>
+                      <a class="hover-with-bg" href="/categories/Go/">Go</a>
                     
                   </div>
                 
@@ -295,7 +278,9 @@ ENTRYPOINT protoc --go_out&#x3D;&#x2F;out --go-drpc_out&#x3D;&#x2F;out --proto_p
                   <div class="post-meta">
                     <i class="iconfont icon-tags"></i>
                     
-                      <a class="hover-with-bg" href="/tags/go/">go</a>
+                      <a class="hover-with-bg" href="/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+                    
+                      <a class="hover-with-bg" href="/tags/Go/">Go</a>
                     
                   </div>
                 
@@ -308,12 +293,18 @@ ENTRYPOINT protoc --go_out&#x3D;&#x2F;out --go-drpc_out&#x3D;&#x2F;out --proto_p
                   <div class="post-prev col-6">
                     
                     
+                      <a href="/2023/04/26/drpc%E7%9A%84%E4%BB%A3%E7%A0%81%E7%94%9F%E6%88%90%E5%B7%A5%E5%85%B7%E7%9A%84%E7%AE%80%E5%8D%95%E6%94%B9%E9%80%A0/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">drpc的代码生成工具的简单改造</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
                   </div>
                   <div class="post-next col-6">
                     
                     
-                      <a href="/2022/07/29/%E8%AE%B0%E4%B8%80%E6%AC%A1tcp%E6%8A%A5%E6%96%87%E5%88%86%E9%9A%94%E9%97%AE%E9%A2%98%E5%A4%84%E7%90%86/">
-                        <span class="hidden-mobile">记一次tcp报文分隔问题处理</span>
+                      <a href="/2022/07/07/Python%E9%A1%B9%E7%9B%AE%E6%89%93%E5%8C%85%E4%B8%BAwhl%E5%8C%85/">
+                        <span class="hidden-mobile">Python项目打包为whl包</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -511,7 +502,7 @@ ENTRYPOINT protoc --go_out&#x3D;&#x2F;out --go-drpc_out&#x3D;&#x2F;out --proto_p
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "drpc的代码生成工具的简单改造&nbsp;",
+        "记一次tcp报文分隔问题处理&nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,

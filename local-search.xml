@@ -29,6 +29,33 @@
   
   
   <entry>
+    <title>记一次tcp报文分隔问题处理</title>
+    <link href="/2022/07/29/%E8%AE%B0%E4%B8%80%E6%AC%A1tcp%E6%8A%A5%E6%96%87%E5%88%86%E9%9A%94%E9%97%AE%E9%A2%98%E5%A4%84%E7%90%86/"/>
+    <url>/2022/07/29/%E8%AE%B0%E4%B8%80%E6%AC%A1tcp%E6%8A%A5%E6%96%87%E5%88%86%E9%9A%94%E9%97%AE%E9%A2%98%E5%A4%84%E7%90%86/</url>
+    
+    <content type="html"><![CDATA[<p>近期开发了一个支持高并发的syslog日志发送工具，手写了一个简单tcp server作为接收端，在打日志的过程中偶然发现了终端打印的日志数据有些不完整，tcp server代码如下：</p><pre><code class="hljs Go"><span class="hljs-keyword">package</span> main<span class="hljs-keyword">import</span> (<span class="hljs-string">"bufio"</span><span class="hljs-string">"fmt"</span><span class="hljs-string">"net"</span>)<span class="hljs-comment">// TCP Server端（本地调试用）</span><span class="hljs-comment">// 处理函数</span><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">process</span><span class="hljs-params">(conn net.Conn)</span></span> &#123;<span class="hljs-keyword">defer</span> conn.Close() <span class="hljs-comment">// 关闭连接</span>        reader := bufio.NewReader(conn)<span class="hljs-keyword">var</span> buf [<span class="hljs-number">128</span>]<span class="hljs-keyword">byte</span>n, err := reader.Read(buf[:]) <span class="hljs-comment">// 读取数据</span><span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;fmt.Println(<span class="hljs-string">"read from client failed, err: "</span>, err)<span class="hljs-keyword">break</span>&#125;recvStr := <span class="hljs-keyword">string</span>(buf[:n])fmt.Println(<span class="hljs-string">"收到Client端发来的数据："</span>, recvStr)<span class="hljs-comment">//conn.Write([]byte(recvStr)) // 发送数据</span>&#125;<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;listen, err := net.Listen(<span class="hljs-string">"tcp"</span>, <span class="hljs-string">"0.0.0.0:3333"</span>)<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;fmt.Println(<span class="hljs-string">"Listen() failed, err: "</span>, err)<span class="hljs-keyword">return</span>&#125;<span class="hljs-keyword">for</span> &#123;conn, err := listen.Accept() <span class="hljs-comment">// 监听客户端的连接请求</span><span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;fmt.Println(<span class="hljs-string">"Accept() failed, err: "</span>, err)<span class="hljs-keyword">continue</span>&#125;<span class="hljs-keyword">go</span> process(conn) <span class="hljs-comment">// 启动一个goroutine来处理客户端的连接请求</span>&#125;&#125;</code></pre><p>按逻辑是每行日志之间会换行，但实际过程中，有几条日志会和上一条粘在一起，而且被截断，现象如下:</p><p><img src="/img/tcp1.jpeg" srcset="/img/loading.gif" alt="image"></p><p>排查后发现，“粘包“是由于，tcp是流传输，会有缓存区，不一定能够及时把消息发出去，像Nagle优化算法会将多次间隔较小、数据量小的数据，合并成一个大的数据块，然后进行封包是，而buf只设置每次读取了128字节。</p><p>google了一下解决办法：</p><ul><li>TCP本身是面向流的，作为网络服务器，如何从这源源不断涌来的数据流中拆分出或者合并出有意义的信息呢？通常会有以下一些常用的方法：</li><li>1、发送端给每个数据包添加包首部，首部中应该至少包含数据包的长度，这样接收端在接收到数据后，通过读取包首部的长度字段，便知道每一个数据包的实际长度了。</li><li>2、发送端将每个数据包封装为固定长度（不够的可以通过补0填充），这样接收端每次从接收缓冲区中读取固定长度的数据就自然而然的把每个数据包拆分开来。</li><li>3、可以在数据包之间设置边界，如添加特殊符号，这样，接收端通过这个边界就可以将不同的数据包拆分开。</li></ul><p>工具发送的日志都是以 \n结尾，且长度不固定，因此选择用分隔符切分，tcp server process函数修改如下：</p><pre><code class="hljs Go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">process</span><span class="hljs-params">(conn net.Conn)</span></span> &#123;<span class="hljs-keyword">defer</span> conn.Close() <span class="hljs-comment">// 关闭连接</span><span class="hljs-keyword">for</span> &#123;reader := bufio.NewReader(conn)<span class="hljs-keyword">for</span> &#123;data, err := reader.ReadSlice(<span class="hljs-string">'\n'</span>)<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<span class="hljs-keyword">if</span> err != io.EOF &#123;log.Println(err)&#125; <span class="hljs-keyword">else</span> &#123;fmt.Println(<span class="hljs-string">"read from client failed, err: "</span>, err)<span class="hljs-keyword">break</span>&#125;&#125;fmt.Println(<span class="hljs-string">"收到Client端发来的数据："</span>, <span class="hljs-keyword">string</span>(data))&#125;&#125;&#125;</code></pre><p>再次接受日志，就没有截断和数据粘黏的问题啦～<br><img src="/img/tcp2.jpeg" srcset="/img/loading.gif" alt="image"></p><p>ps：使用抓包工具就可以发现，像http是用\r\n去做数据的边界区分的</p><p>最后，“粘包”的时候都是粘了日志的前半部分，而单条日志的后半部分在之后的传输中就神奇的丢失了，这个目前还没找到原因</p><p>编辑做下补充，tcp是流传输，”粘包”两个字刻意加了引号，本意是想指代业务数据的边界处理问题，用词不当，希望不误导各位</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Go</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>网络</tag>
+      
+      <tag>Go</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Python项目打包为whl包</title>
     <link href="/2022/07/07/Python%E9%A1%B9%E7%9B%AE%E6%89%93%E5%8C%85%E4%B8%BAwhl%E5%8C%85/"/>
     <url>/2022/07/07/Python%E9%A1%B9%E7%9B%AE%E6%89%93%E5%8C%85%E4%B8%BAwhl%E5%8C%85/</url>
