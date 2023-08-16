@@ -274,7 +274,17 @@ type Server struct &#123;
         
           
         
-        <div>TITLE</div>
+        <div>前言开发中偶然发现，结构体中声明了[]byte类型的字段，json marshal后，[]byte类型的字段会被base64编码，下面通过一个例子来找找base64编码的原因
+排查过程例子package main
+
+import (
+	"encoding/json"
+	"testing"
+)
+
+type Reply struct &#123;
+	Name    string
+	Content []</div>
       </a>
 
       <div class="index-btm post-metas">

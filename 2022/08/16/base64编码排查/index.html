@@ -143,7 +143,7 @@
                   
                   <span class="post-meta mr-2">
                     <i class="iconfont icon-chart"></i>
-                    1 字
+                    734 字
                   </span>
                 
 
@@ -153,7 +153,7 @@
                       <i class="iconfont icon-clock-fill"></i>
                     
                     
-                    1
+                    12
                      分钟
                   </span>
                 
@@ -183,12 +183,137 @@
             
               <p class="note note-info">
                 
-                  本文最后更新于：2023年8月16日 晚上
+                  本文最后更新于：2023年8月17日 凌晨
                 
               </p>
             
             <article class="markdown-body">
-              <h2 id="TITLE"><a href="#TITLE" class="headerlink" title="TITLE"></a>TITLE</h2>
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>开发中偶然发现，结构体中声明了[]byte类型的字段，json marshal后，[]byte类型的字段会被base64编码，下面通过一个例子来找找base64编码的原因</p>
+<h2 id="排查过程"><a href="#排查过程" class="headerlink" title="排查过程"></a>排查过程</h2><h3 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h3><pre><code class="hljs GO"><span class="hljs-keyword">package</span> main
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">"encoding/json"</span>
+	<span class="hljs-string">"testing"</span>
+)
+
+<span class="hljs-keyword">type</span> Reply <span class="hljs-keyword">struct</span> &#123;
+	Name    <span class="hljs-keyword">string</span>
+	Content []<span class="hljs-keyword">byte</span>
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestJSONMarshal</span><span class="hljs-params">(t *testing.T)</span></span> &#123;
+	<span class="hljs-keyword">var</span> r = Reply&#123;
+		Name:    <span class="hljs-string">"lam"</span>,
+		Content: []<span class="hljs-keyword">byte</span>(<span class="hljs-string">"pongpong"</span>),
+	&#125;
+	res, _ := json.Marshal(&amp;r)
+	t.Log(<span class="hljs-keyword">string</span>(res))
+&#125;</code></pre>
+
+<p>输出</p>
+<pre><code class="hljs plain">&#x3D;&#x3D;&#x3D; RUN   TestJSONMarshal
+    client_test.go:26: &#123;&quot;Name&quot;:&quot;lam&quot;,&quot;Content&quot;:&quot;cG9uZ3Bvbmc&#x3D;&quot;&#125;
+--- PASS: TestJSONMarshal (0.00s)
+PASS</code></pre>
+<p>跟着debug进入encoding/json 包内部，发现注释部分已经说明[]byte类型会被base64编码：</p>
+<pre><code class="hljs plain">&#x2F;&#x2F; ...
+&#x2F;&#x2F; Array and slice values encode as JSON arrays, except that
+&#x2F;&#x2F; []byte encodes as a base64-encoded string, and a nil slice
+&#x2F;&#x2F; encodes as the null JSON value.
+&#x2F;&#x2F; ...</code></pre>
+
+<p>继续根据方法调用链找到具体的编码位置：</p>
+<pre><code class="hljs plain">func (e *encodeState) marshal(v any, opts encOpts) (err error) &#123;
+	defer func() &#123;
+		if r :&#x3D; recover(); r !&#x3D; nil &#123;
+			if je, ok :&#x3D; r.(jsonError); ok &#123;
+				err &#x3D; je.error
+			&#125; else &#123;
+				panic(r)
+			&#125;
+		&#125;
+	&#125;()
+	e.reflectValue(reflect.ValueOf(v), opts)
+	return nil
+&#125;</code></pre>
+
+<pre><code class="hljs plain">func (e *encodeState) reflectValue(v reflect.Value, opts encOpts) &#123;
+	valueEncoder(v)(e, v, opts)
+&#125;
+
+func valueEncoder(v reflect.Value) encoderFunc &#123;
+	if !v.IsValid() &#123;
+		return invalidValueEncoder
+	&#125;
+	return typeEncoder(v.Type())
+&#125;</code></pre>
+
+<pre><code class="hljs plain">func typeEncoder(t reflect.Type) encoderFunc &#123;
+        &#x2F;&#x2F; ...
+	&#x2F;&#x2F; Compute the real encoder and replace the indirect func with it.
+	f &#x3D; newTypeEncoder(t, true)
+	wg.Done()
+	encoderCache.Store(t, f)
+	return f
+&#125;</code></pre>
+
+<pre><code class="hljs plain">func newTypeEncoder(t reflect.Type, allowAddr bool) encoderFunc &#123;
+        &#x2F;&#x2F; ...
+	switch t.Kind() &#123;
+        &#x2F;&#x2F; ...
+	case reflect.Slice:
+		return newSliceEncoder(t)
+
+        &#x2F;&#x2F; ...
+	default:
+		return unsupportedTypeEncoder
+	&#125;
+&#125;</code></pre>
+
+<pre><code class="hljs plain">func newSliceEncoder(t reflect.Type) encoderFunc &#123;
+	&#x2F;&#x2F; Byte slices get special treatment; arrays don&#39;t.
+	if t.Elem().Kind() &#x3D;&#x3D; reflect.Uint8 &#123;
+		p :&#x3D; reflect.PointerTo(t.Elem())
+		if !p.Implements(marshalerType) &amp;&amp; !p.Implements(textMarshalerType) &#123;
+			return encodeByteSlice
+		&#125;
+	&#125;
+	enc :&#x3D; sliceEncoder&#123;newArrayEncoder(t)&#125;
+	return enc.encode
+&#125;</code></pre>
+
+<p>该方法会根据slice的长度选择效率更高的字符串拼接方式</p>
+<pre><code class="hljs plain">func encodeByteSlice(e *encodeState, v reflect.Value, _ encOpts) &#123;
+	if v.IsNil() &#123;
+		e.WriteString(&quot;null&quot;)
+		return
+	&#125;
+	s :&#x3D; v.Bytes()
+	e.WriteByte(&#39;&quot;&#39;)
+	encodedLen :&#x3D; base64.StdEncoding.EncodedLen(len(s))
+	if encodedLen &lt;&#x3D; len(e.scratch) &#123;
+		&#x2F;&#x2F; If the encoded bytes fit in e.scratch, avoid an extra
+		&#x2F;&#x2F; allocation and use the cheaper Encoding.Encode.
+		dst :&#x3D; e.scratch[:encodedLen]
+		base64.StdEncoding.Encode(dst, s)
+		e.Write(dst)
+	&#125; else if encodedLen &lt;&#x3D; 1024 &#123;
+		&#x2F;&#x2F; The encoded bytes are short enough to allocate for, and
+		&#x2F;&#x2F; Encoding.Encode is still cheaper.
+		dst :&#x3D; make([]byte, encodedLen)
+		base64.StdEncoding.Encode(dst, s)
+		e.Write(dst)
+	&#125; else &#123;
+		&#x2F;&#x2F; The encoded bytes are too long to cheaply allocate, and
+		&#x2F;&#x2F; Encoding.Encode is no longer noticeably cheaper.
+		enc :&#x3D; base64.NewEncoder(base64.StdEncoding, e)
+		enc.Write(s)
+		enc.Close()
+	&#125;
+	e.WriteByte(&#39;&quot;&#39;)
+&#125;</code></pre>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>至此，[]byte被base64编码的代码已经找着了，思考了下go之所以选择编码[]byte，是为了避免使用utf-8进行编码转换的时候出现非预期的字符，导致“乱码”问题；类似的在AES加密等场景下，也会选择把加密后的二进制数组使用base64或其他方式的编码为字符串进行传输和存储，待使用时进行base64解码，再操作原始的[]byte数据。</p>
+
             </article>
             <hr>
             <div>
