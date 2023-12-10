@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon-apple.png">
+  <link rel="icon" type="image/png" href="/img/favicon.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="Tachiu Lam">
+  <meta name="keywords" content="">
+  <title>golang对unicode的读写方式 - Tachiu Lam</title>
+
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
+<link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/highlight.js/10.0.0/styles/github-gist.min.css" />
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_fmb4a04yx8h.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_pjno9b9zyxs.css">
+
+
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>TachiuLam's emmm...</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          <li class="nav-item">
+            <a class="nav-link" href="/">
+              <i class="iconfont icon-home-fill"></i>
+              首页</a>
+          </li>
+        
+          
+          
+          
+          <li class="nav-item">
+            <a class="nav-link" href="/archives/">
+              <i class="iconfont icon-archive-fill"></i>
+              归档</a>
+          </li>
+        
+          
+          
+          
+          <li class="nav-item">
+            <a class="nav-link" href="/categories/">
+              <i class="iconfont icon-category-fill"></i>
+              分类</a>
+          </li>
+        
+          
+          
+          
+          <li class="nav-item">
+            <a class="nav-link" href="/tags/">
+              <i class="iconfont icon-tags-fill"></i>
+              标签</a>
+          </li>
+        
+          
+          
+          
+          <li class="nav-item">
+            <a class="nav-link" href="/about/">
+              <i class="iconfont icon-user-fill"></i>
+              关于</a>
+          </li>
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" data-toggle="modal" data-target="#modalSearch">&nbsp;&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="view intro-2" id="background" parallax=true
+         style="background: url('/img/go1.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="container text-center white-text fadeInUp">
+            <span class="h2" id="subtitle">
+              
+            </span>
+
+            
+              
+                <div class="mt-3 post-meta">
+                  <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+                  <time datetime="2023-09-19 23:52">
+                    2023年9月19日 晚上
+                  </time>
+                </div>
+              
+
+              <div class="mt-1">
+                
+                  
+                  <span class="post-meta mr-2">
+                    <i class="iconfont icon-chart"></i>
+                    1.7k 字
+                  </span>
+                
+
+                
+                  
+                  <span class="post-meta mr-2">
+                      <i class="iconfont icon-clock-fill"></i>
+                    
+                    
+                    28
+                     分钟
+                  </span>
+                
+
+                
+              </div>
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-md">
+      <div class="container nopadding-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <div class="post-content mx-auto" id="post">
+            
+              <p class="note note-info">
+                
+                  本文最后更新于：2023年9月20日 凌晨
+                
+              </p>
+            
+            <article class="markdown-body">
+              <h3 id="统计字符长度踩的坑"><a href="#统计字符长度踩的坑" class="headerlink" title="统计字符长度踩的坑"></a>统计字符长度踩的坑</h3><pre><code class="hljs plain">import (
+    &quot;fmt&quot;
+    &quot;testing&quot;
+    &quot;unicode&#x2F;utf8&quot;
+)
+ 
+func TestUTF8Length(t *testing.T) &#123;
+    &#123;
+        s :&#x3D; &quot;hello&quot;
+        t.Logf(&quot;len(%s) &#x3D; %d&quot;, s, len(s))
+    &#125;
+    &#123;
+        s :&#x3D; &quot;你好&quot;
+        t.Logf(&quot;len(%s) &#x3D; %d&quot;, s, len(s))
+ 
+    &#125;
+&#125;
+ 
+func TestUnicodeLength(t *testing.T) &#123;
+    &#123;
+        s :&#x3D; &quot;hello&quot;
+        t.Logf(&quot;unicodeLen(%s) &#x3D; %d&quot;, s, utf8.RuneCountInString(s))
+    &#125;
+    &#123;
+        s :&#x3D; &quot;你好&quot;
+        t.Logf(&quot;unicodeLen(%s) &#x3D; %d&quot;, s, utf8.RuneCountInString(s))
+    &#125;
+    &#123;
+        s :&#x3D; &quot;😄&quot;
+        t.Logf(&quot;unicodeLen(%s) &#x3D; %d&quot;, s, utf8.RuneCountInString(s))
+    &#125;
+&#125;
+ 
+func TestUnicode(t *testing.T) &#123;
+    &#123;
+        s :&#x3D; &quot;hello z&quot;
+        t.Logf(&quot;print %s&quot;, s)
+        RangePrint(s)
+    &#125;
+    fmt.Println()
+    &#123;
+        s :&#x3D; &quot;你好&quot;
+        t.Logf(&quot;print %s&quot;, s)
+        RangePrint(s)
+    &#125;
+    fmt.Println()
+    &#123;
+        s :&#x3D; &quot;😄&quot;
+        t.Logf(&quot;print %s&quot;, s)
+        RangePrint(s)
+    &#125;
+&#125;
+ 
+func TestUtf8Bytes(t *testing.T) &#123;
+    &#123;
+        s :&#x3D; &quot;😄&quot;
+        for _, b :&#x3D; range []byte(s) &#123;
+            fmt.Printf(&quot;%#02x &quot;, b)
+        &#125;
+    &#125;
+&#125;
+ 
+func RangePrint(s string) &#123;
+    for _, char :&#x3D; range s &#123;
+        fmt.Printf(&quot;%U &quot;, char)
+    &#125;
+&#125;</code></pre>
+
+<h3 id="UNICODE"><a href="#UNICODE" class="headerlink" title="UNICODE"></a>UNICODE</h3><p>UNICODE 万国码 是ISO统一规范的一种字符集，给每个字符一个去标识。一个字符的Unicode编号（又称为码点）是一个 唯一数字 ，通常用十六进制表示，取值范围是0到10FFFF（转换成十进制就是0到1114111）。</p>
+<h3 id="UTF"><a href="#UTF" class="headerlink" title="UTF"></a>UTF</h3><p>Unicode是数与字符的对应关系，它是一种概念，所以它只对人类有意义。计算机不能处理和存储概念，只能处理和存储数据。所以我们必须想个办法，把Unicode的概念转换成计算机可以处理的具体数据，而这是“UTF”（Unicode Transformation Format，Unicode转换格式，Unicode转写方式）。<br>现今大多数计算机体系结构都使用8个二进制位做为一个字节，“UTF”的设计目的，是把Unicode规范为字符分配的编号转换为计算机可以直接存储和处理的“八位字节序列”。</p>
+<h3 id="UTF-8"><a href="#UTF-8" class="headerlink" title="UTF-8"></a>UTF-8</h3><p><a href="https://en.wikipedia.org/wiki/UTF-8" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/UTF-8</a><br>1个unicode字符至少8bit位</p>
+<p> <img src="/img/unicode.png" srcset="/img/loading.gif" alt="image"></p>
+<p>如果第一个字节是0xxxxxxx，表示该字符只有1字节。<br>如果第一个字节是110xxxxx，表示该字符有2字节。<br>如果第一个字节是1110xxxx，表示该字符有3字节。<br>如果第一个字节是11110xxx，表示该字符有4字节。<br>10xxxxxx表示尾随字节。<br>实际上5字节和6字节的编码不会出现，因为Unicode最大码点只到U+10FFFF，用4字节就够了。<br>把“虎”字及其emoji转换为UTF-8编码。<br>虎：</p>
+<ul>
+<li><p>码点为 U+864E</p>
+</li>
+<li><p>转换为二进制，1000011001001110</p>
+</li>
+<li><p>从末尾开始按6位分组，1000 011001 001110</p>
+</li>
+<li><p>需要3字节，开头插入1110，中间插入两个10，得到 11101000 10011001 10001110</p>
+</li>
+<li><p>转换为十六进制，得到 E8 99 8E</p>
+</li>
+</ul>
+<p>虎的emoji：</p>
+<ul>
+<li><p>码点为 U+1F405</p>
+</li>
+<li><p>转换为二进制，11111010000000101</p>
+</li>
+<li><p>从末尾开始按6位分组，得到 11111 010000 000101</p>
+</li>
+<li><p>第一部分为5位，开头插入1110的话就9位了，一个字节放不下，所以前面得补一个字节，用4字节表示。字节中间和末尾空隙填充0，然后每个尾随字节前面都补10，也就是 11110000 10011111 10010000 10000101</p>
+</li>
+<li><p>转换成十六进制，得到 F0 9F 90 85</p>
+</li>
+</ul>
+<p><a href="https://tool.oschina.net/hexconvert/" target="_blank" rel="noopener">https://tool.oschina.net/hexconvert/</a></p>
+<p>解码器读取到E8就能知道第一个字符3字节。然后跳过2字节读取到F0就能知道第二个字符4字节，所以不会有边界问题。</p>
+<pre><code class="hljs plain">&#x2F;&#x2F; Numbers fundamental to the encoding.
+const (
+   RuneError &#x3D; &#39;\uFFFD&#39;     &#x2F;&#x2F; 当出现无法解码的字节序列或无效的Unicode字符时，Go语言会使用该替换字符来表示错误或无效的部分。
+   RuneSelf  &#x3D; 0x80         &#x2F;&#x2F; 由utf-8定义可知，小于该值的即表示该字符本身
+   MaxRune   &#x3D; &#39;\U0010FFFF&#39; &#x2F;&#x2F; Maximum valid Unicode code point.
+   UTFMax    &#x3D; 4            &#x2F;&#x2F; 最大的utf-8编码unicode1字节数
+    
+   ...
+    
+   xx &#x3D; 0xF1 &#x2F;&#x2F; invalid: size 1
+   as &#x3D; 0xF0 &#x2F;&#x2F; ASCII: size 1
+   s1 &#x3D; 0x02 &#x2F;&#x2F; accept 0, size 2
+   s2 &#x3D; 0x13 &#x2F;&#x2F; accept 1, size 3
+   s3 &#x3D; 0x03 &#x2F;&#x2F; accept 0, size 3
+   s4 &#x3D; 0x23 &#x2F;&#x2F; accept 2, size 3
+   s5 &#x3D; 0x34 &#x2F;&#x2F; accept 3, size 4
+   s6 &#x3D; 0x04 &#x2F;&#x2F; accept 0, size 4
+   s7 &#x3D; 0x44 &#x2F;&#x2F; accept 4, size 4
+)
+ 
+type acceptRange struct &#123;
+   lo uint8 &#x2F;&#x2F; lowest value for second byte.
+   hi uint8 &#x2F;&#x2F; highest value for second byte.
+&#125;
+ 
+var acceptRanges &#x3D; [16]acceptRange&#123;
+   0: &#123;locb, hicb&#125;, &#x2F;&#x2F; 0x80, 0b10111111
+   1: &#123;0xA0, hicb&#125;, &#x2F;&#x2F; 0b10100000, 0b10111111
+   2: &#123;locb, 0x9F&#125;, &#x2F;&#x2F; 0x80, 0b10011111
+   3: &#123;0x90, hicb&#125;, &#x2F;&#x2F; 0b10010000, 0b10111111 （标记位的范围）
+   4: &#123;locb, 0x8F&#125;, &#x2F;&#x2F; 0x80, 10001111
+&#125;
+ 
+&#x2F;&#x2F; first is information about the first byte in a UTF-8 sequence.
+var first &#x3D; [256]uint8&#123;
+   &#x2F;&#x2F;   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+   as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, &#x2F;&#x2F; 0x00-0x0F
+   as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, &#x2F;&#x2F; 0x10-0x1F
+   as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, &#x2F;&#x2F; 0x20-0x2F
+   as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, &#x2F;&#x2F; 0x30-0x3F
+   as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, &#x2F;&#x2F; 0x40-0x4F
+   as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, &#x2F;&#x2F; 0x50-0x5F
+   as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, &#x2F;&#x2F; 0x60-0x6F
+   as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, &#x2F;&#x2F; 0x70-0x7F
+   &#x2F;&#x2F;   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+   xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, &#x2F;&#x2F; 0x80-0x8F
+   xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, &#x2F;&#x2F; 0x90-0x9F
+   xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, &#x2F;&#x2F; 0xA0-0xAF
+   xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, &#x2F;&#x2F; 0xB0-0xBF
+   xx, xx, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, &#x2F;&#x2F; 0xC0-0xCF
+   s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, &#x2F;&#x2F; 0xD0-0xDF
+   s2, s3, s3, s3, s3, s3, s3, s3, s3, s3, s3, s3, s3, s4, s3, s3, &#x2F;&#x2F; 0xE0-0xEF
+   s5, s6, s6, s6, s7, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, &#x2F;&#x2F; 0xF0-0xFF
+&#125;
+ 
+...
+ 
+func RuneCountInString(s string) (n int) &#123;
+   ns :&#x3D; len(s)
+   for i :&#x3D; 0; i &lt; ns; n++ &#123;
+      c :&#x3D; s[i]
+      if c &lt; RuneSelf &#123; &#x2F;&#x2F; 小于0x80的都表示单个字符，直接继续循环计数n +1
+         &#x2F;&#x2F; ASCII fast path
+         i++
+         continue
+      &#125;
+      &#x2F;&#x2F; first is information about the first byte in a UTF-8 sequence.
+      &#x2F;&#x2F; 第一个字节（无符号256）在utf-8的位置，是16进制的xx-s7变量
+      x :&#x3D; first[c]
+      if x &#x3D;&#x3D; xx &#123;
+         i++ &#x2F;&#x2F; invalid.
+         continue
+      &#125;
+      size :&#x3D; int(x &amp; 7) &#x2F;&#x2F; 与 111 进行与运算 取得末7位的size值
+      if i+size &gt; ns &#123;
+         i++ &#x2F;&#x2F; Short or invalid.
+         continue
+      &#125;
+      accept :&#x3D; acceptRanges[x&gt;&gt;4] &#x2F;&#x2F; 右移4位 取得accept的值
+      if c :&#x3D; s[i+1]; c &lt; accept.lo || accept.hi &lt; c &#123; &#x2F;&#x2F; 标记位范围
+         size &#x3D; 1
+      &#125; else if size &#x3D;&#x3D; 2 &#123;
+      &#125; else if c :&#x3D; s[i+2]; c &lt; locb || hicb &lt; c &#123;
+         size &#x3D; 1
+      &#125; else if size &#x3D;&#x3D; 3 &#123;
+      &#125; else if c :&#x3D; s[i+3]; c &lt; locb || hicb &lt; c &#123;
+         size &#x3D; 1
+      &#125;
+      i +&#x3D; size
+   &#125;
+   return n
+&#125;</code></pre>
+
+            </article>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Go/">Go</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Go/">Go</a>
+                    
+                      <a class="hover-with-bg" href="/tags/Unicode/">Unicode</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">本博客所有文章除特别声明外，均采用 <a href="https://zh.wikipedia.org/wiki/Wikipedia:CC_BY-SA_3.0%E5%8D%8F%E8%AE%AE%E6%96%87%E6%9C%AC" target="_blank" rel="nofollow noopener noopener">CC BY-SA 3.0协议</a> 。转载请注明出处！</p>
+              
+              
+                <div class="post-prevnext row">
+                  <div class="post-prev col-6">
+                    
+                    
+                  </div>
+                  <div class="post-next col-6">
+                    
+                    
+                      <a href="/2023/08/08/net-http%E7%9A%84%E5%B0%8F%E6%80%BB%E7%BB%93/">
+                        <span class="hidden-mobile">go net/http的小总结</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </div>
+                </div>
+              
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div id="tocbot"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+  </main>
+
+  
+    <a id="scroll-top-button" href="#" role="button">
+      <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+    </a>
+  
+
+  
+    <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+
+  
+
+  
+
+  <footer class="mt-5">
+  <div class="text-center py-3">
+    <div>
+      <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a>
+      <i class="iconfont icon-love"></i>
+      <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener">
+        <span>Fluid</span></a>
+    </div>
+    
+
+    
+
+    
+  <span id="timeDate">载入天数...</span>
+  <span id="times">载入时分秒...</span>
+  <script>
+  var now = new Date();
+  function createtime(){
+      var grt= new Date("05/22/2020 00:00:00");//此处修改你的建站时间或者网站上线时间
+      now.setTime(now.getTime()+250);
+      days = (now - grt ) / 1000 / 60 / 60 / 24;
+      dnum = Math.floor(days);
+      hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum);
+      hnum = Math.floor(hours);
+      if(String(hnum).length ==1 ){
+          hnum = "0" + hnum;
+      }
+      minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+      mnum = Math.floor(minutes);
+      if(String(mnum).length ==1 ){
+                mnum = "0" + mnum;
+      }
+      seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+      snum = Math.round(seconds);
+      if(String(snum).length ==1 ){
+                snum = "0" + snum;
+      }
+      document.getElementById("timeDate").innerHTML = "本站勉强安全运行&nbsp"+dnum+"&nbsp天";
+      document.getElementById("times").innerHTML = hnum + "&nbsp小时&nbsp" + mnum + "&nbsp分&nbsp" + snum + "&nbsp秒";
+  }
+  setInterval("createtime()",250);
+  </script>
+</div>
+</footer>
+
+<!-- SCRIPTS -->
+<script  src="https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js" ></script>
+<script  src="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/js/bootstrap.min.js" ></script>
+<script  src="/js/main.js" ></script>
+
+
+  <script  src="/js/lazyload.js" ></script>
+
+
+
+  
+  <script  src="https://cdn.staticfile.org/tocbot/4.11.1/tocbot.min.js" ></script>
+  <script>
+    $(document).ready(function () {
+      var boardCtn = $('#board-ctn');
+      var boardTop = boardCtn.offset().top;
+
+      tocbot.init({
+        tocSelector: '#tocbot',
+        contentSelector: '.post-content',
+        headingSelector: 'h1,h2,h3,h4,h5,h6',
+        linkClass: 'tocbot-link',
+        activeLinkClass: 'tocbot-active-link',
+        listClass: 'tocbot-list',
+        isCollapsedClass: 'tocbot-is-collapsed',
+        collapsibleClass: 'tocbot-is-collapsible',
+        collapseDepth: 0,
+        scrollSmooth: true,
+        headingsOffset: -boardTop
+      });
+      if ($('.toc-list-item').length > 0) {
+        $('#toc').css('visibility', 'visible');
+      }
+    });
+  </script>
+
+
+
+
+
+  <script defer src="https://cdn.staticfile.org/clipboard.js/2.0.6/clipboard.min.js" ></script>
+  <script  src="/js/clipboard-use.js" ></script>
+
+
+
+
+
+
+<!-- Plugins -->
+
+
+  
+
+  
+
+  
+    <!-- Tencent Analytics -->
+    <script defer>
+      var _mtac = {};
+      (function () {
+        var mta = document.createElement("script");
+        mta.src = "//pingjs.qq.com/h5/stats.js?v2.0.4";
+        mta.setAttribute("name", "MTAH5");
+        mta.setAttribute("sid", "500720703");
+        
+        mta.setAttribute("cid", "500720705");
+        
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(mta, s);
+      })();
+    </script>
+  
+
+  
+
+  
+
+  
+
+
+
+  <script  src="https://cdn.staticfile.org/typed.js/2.0.11/typed.min.js" ></script>
+  <script>
+    var typed = new Typed('#subtitle', {
+      strings: [
+        '  ',
+        "golang对unicode的读写方式&nbsp;",
+      ],
+      cursorChar: "_",
+      typeSpeed: 70,
+      loop: false,
+    });
+    typed.stop();
+    $(document).ready(function () {
+      $(".typed-cursor").addClass("h2");
+      typed.start();
+    });
+  </script>
+
+
+
+  <script  src="https://cdn.staticfile.org/anchor-js/4.2.2/anchor.min.js" ></script>
+  <script>
+    anchors.options = {
+      placement: "right",
+      visible: "hover",
+      
+    };
+    var el = "h1,h2,h3,h4,h5,h6".split(",");
+    var res = [];
+    for (item of el) {
+      res.push(".markdown-body > " + item)
+    }
+    anchors.add(res.join(", "))
+  </script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+  <script>
+    var path = "/local-search.xml";
+    var inputArea = document.querySelector("#local-search-input");
+    inputArea.onclick = function () {
+      searchFunc(path, 'local-search-input', 'local-search-result');
+      this.onclick = null
+    }
+  </script>
+
+
+
+  <script  src="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <script>
+    $('#post img:not(.no-zoom img, img[no-zoom]), img[zoom]').each(
+      function () {
+        var element = document.createElement('a');
+        $(element).attr('data-fancybox', 'images');
+        $(element).attr('href', $(this).attr('src'));
+        $(this).wrap(element);
+      }
+    );
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
