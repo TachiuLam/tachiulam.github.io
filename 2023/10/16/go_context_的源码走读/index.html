@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon-apple.png">
+  <link rel="icon" type="image/png" href="/img/favicon.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="Tachiu Lam">
+  <meta name="keywords" content="">
+  <title>go context 的源码走读 - Tachiu Lam</title>
+
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
+<link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/highlight.js/10.0.0/styles/github-gist.min.css" />
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_fmb4a04yx8h.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_pjno9b9zyxs.css">
+
+
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>TachiuLam's emmm...</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          <li class="nav-item">
+            <a class="nav-link" href="/">
+              <i class="iconfont icon-home-fill"></i>
+              首页</a>
+          </li>
+        
+          
+          
+          
+          <li class="nav-item">
+            <a class="nav-link" href="/archives/">
+              <i class="iconfont icon-archive-fill"></i>
+              归档</a>
+          </li>
+        
+          
+          
+          
+          <li class="nav-item">
+            <a class="nav-link" href="/categories/">
+              <i class="iconfont icon-category-fill"></i>
+              分类</a>
+          </li>
+        
+          
+          
+          
+          <li class="nav-item">
+            <a class="nav-link" href="/tags/">
+              <i class="iconfont icon-tags-fill"></i>
+              标签</a>
+          </li>
+        
+          
+          
+          
+          <li class="nav-item">
+            <a class="nav-link" href="/about/">
+              <i class="iconfont icon-user-fill"></i>
+              关于</a>
+          </li>
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" data-toggle="modal" data-target="#modalSearch">&nbsp;&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="view intro-2" id="background" parallax=true
+         style="background: url('/img/go2.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="container text-center white-text fadeInUp">
+            <span class="h2" id="subtitle">
+              
+            </span>
+
+            
+              
+                <div class="mt-3 post-meta">
+                  <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+                  <time datetime="2023-10-16 23:06">
+                    2023年10月16日 晚上
+                  </time>
+                </div>
+              
+
+              <div class="mt-1">
+                
+                  
+                  <span class="post-meta mr-2">
+                    <i class="iconfont icon-chart"></i>
+                    3k 字
+                  </span>
+                
+
+                
+                  
+                  <span class="post-meta mr-2">
+                      <i class="iconfont icon-clock-fill"></i>
+                    
+                    
+                    45
+                     分钟
+                  </span>
+                
+
+                
+              </div>
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-md">
+      <div class="container nopadding-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <div class="post-content mx-auto" id="post">
+            
+              <p class="note note-info">
+                
+                  本文最后更新于：2023年12月10日 晚上
+                
+              </p>
+            
+            <article class="markdown-body">
+              <h2 id="1、作用"><a href="#1、作用" class="headerlink" title="1、作用"></a>1、作用</h2><p>context 主要用来在 goroutine 之间传递上下文信息，包括：取消信号、超时时间、截止时间、k-v 等，</p>
+<p>context的数据结构一棵倒排树，具体会在下文源码走读中剖析。<br><img src="/img/context1.jpeg" srcset="/img/loading.gif" alt="image"></p>
+<h2 id="2、代码结构"><a href="#2、代码结构" class="headerlink" title="2、代码结构"></a>2、代码结构</h2><p>context包的核心是context interface，及实现了context接口的emptyCtx、valueCtx、cancelCtx、timerCtx。<br><img src="/img/context2.jpeg" srcset="/img/loading.gif" alt="image"></p>
+<h3 id="2-1、Context-interface"><a href="#2-1、Context-interface" class="headerlink" title="2.1、Context interface"></a>2.1、Context interface</h3><p>Context 是一个接口，定义了 4 个方法，它们都是幂等的。也就是说连续多次调用同一个方法，得到的结果都是相同的。</p>
+<pre><code class="hljs go"><span class="hljs-keyword">type</span> Context <span class="hljs-keyword">interface</span> &#123;
+        <span class="hljs-comment">// 返回一个 channel，可以表示 context 被取消的信号：当这个 channel 被关闭时，</span>
+        <span class="hljs-comment">// 说明 context 被取消了。注意，这是一个只读的channel，读一个关闭的 channel 会读出相应类型的零值。</span>
+        <span class="hljs-comment">// 并且源码里没有地方会向这个 channel 里面塞入值。换句话说，这是一个 receive-only 的 channel。</span>
+        <span class="hljs-comment">// 因此在子协程里读这个 channel，除非被关闭，否则读不出来任何东西。</span>
+        <span class="hljs-comment">// 也正是利用了这一点，子协程从 channel 里读出了值（零值）后，就可以做一些收尾工作，尽快退出。</span>
+        Done() &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;
+
+        <span class="hljs-comment">// 在 channel Done 关闭后，返回 context 取消原因</span>
+        Err() error
+        
+        <span class="hljs-comment">// 返回 context 是否会被取消以及自动取消时间（即 deadline）</span>
+        Deadline() (deadline time.Time, ok <span class="hljs-keyword">bool</span>)
+
+        <span class="hljs-comment">// 获取 key 对应的 value</span>
+        Value(key <span class="hljs-keyword">interface</span>&#123;&#125;) <span class="hljs-keyword">interface</span>&#123;&#125;
+&#125;</code></pre>
+<h3 id="2-2、emptyCtx"><a href="#2-2、emptyCtx" class="headerlink" title="2.2、emptyCtx"></a>2.2、emptyCtx</h3><pre><code class="hljs go"><span class="hljs-keyword">type</span> emptyCtx <span class="hljs-keyword">int</span>
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(*emptyCtx)</span> <span class="hljs-title">Deadline</span><span class="hljs-params">()</span> <span class="hljs-params">(deadline time.Time, ok <span class="hljs-keyword">bool</span>)</span></span> &#123;
+    <span class="hljs-keyword">return</span>
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(*emptyCtx)</span> <span class="hljs-title">Done</span><span class="hljs-params">()</span> &lt;-<span class="hljs-title">chan</span> <span class="hljs-title">struct</span></span>&#123;&#125; &#123;
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(*emptyCtx)</span> <span class="hljs-title">Err</span><span class="hljs-params">()</span> <span class="hljs-title">error</span></span> &#123;
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(*emptyCtx)</span> <span class="hljs-title">Value</span><span class="hljs-params">(key any)</span> <span class="hljs-title">any</span></span> &#123;
+    <span class="hljs-keyword">return</span> 
+&#125;</code></pre>
+<ul>
+<li>emptyCtx 是一个空的 context，类型为一个整型；</li>
+<li>Deadline 方法会返回一个公元元年时间以及 false 的 flag，标识当前 context 不存在过期时间；</li>
+<li>Done 方法返回一个 nil 值，用户无论往 nil 中写入或者读取数据，均会陷入阻塞；</li>
+<li>Err 方法返回的错误为 nil；</li>
+<li>Value 方法返回的 value 为 nil.</li>
+</ul>
+<h4 id="2-2-1、Background-amp-TODO"><a href="#2-2-1、Background-amp-TODO" class="headerlink" title="2.2.1、Background &amp; TODO"></a>2.2.1、Background &amp; TODO</h4><pre><code class="hljs go"><span class="hljs-keyword">var</span> (
+    background = <span class="hljs-built_in">new</span>(emptyCtx)
+    todo       = <span class="hljs-built_in">new</span>(emptyCtx)
+)
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Background</span><span class="hljs-params">()</span> <span class="hljs-title">Context</span></span> &#123;
+    <span class="hljs-keyword">return</span> background
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TODO</span><span class="hljs-params">()</span> <span class="hljs-title">Context</span></span> &#123;
+    <span class="hljs-keyword">return</span> todo
+&#125;</code></pre>
+<p>Background 和TODO是一个空的 context， context.Background() 和 context.TODO() 方法返回的均是 emptyCtx 类型的一个实例。</p>
+<h3 id="2-3、context-WithValue-amp-valueCtx"><a href="#2-3、context-WithValue-amp-valueCtx" class="headerlink" title="2.3、context.WithValue() &amp; valueCtx"></a>2.3、context.WithValue() &amp; valueCtx</h3><p>context.WithValue() 用于基于传入的ctx作为parent ctx构造一个valueCtx</p>
+<pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithValue</span><span class="hljs-params">(parent Context, key, val any)</span> <span class="hljs-title">Context</span></span> &#123;
+	<span class="hljs-keyword">if</span> parent == <span class="hljs-literal">nil</span> &#123;
+		<span class="hljs-built_in">panic</span>(<span class="hljs-string">"cannot create context from nil parent"</span>)
+	&#125;
+	<span class="hljs-keyword">if</span> key == <span class="hljs-literal">nil</span> &#123;
+		<span class="hljs-built_in">panic</span>(<span class="hljs-string">"nil key"</span>)
+	&#125;
+	<span class="hljs-keyword">if</span> !reflectlite.TypeOf(key).Comparable() &#123;
+		<span class="hljs-built_in">panic</span>(<span class="hljs-string">"key is not comparable"</span>)
+	&#125;
+	<span class="hljs-keyword">return</span> &amp;valueCtx&#123;parent, key, val&#125;
+&#125;
+
+<span class="hljs-comment">// A valueCtx carries a key-value pair. It implements Value for that key and</span>
+<span class="hljs-comment">// delegates all other calls to the embedded Context.</span>
+<span class="hljs-keyword">type</span> valueCtx <span class="hljs-keyword">struct</span> &#123;
+	Context
+	key, val any
+&#125;</code></pre>
+<p>valueCtx继承了Context interface，并实现了Stringer 接口</p>
+<p>从源码的value方法，可以发现context取值的查找方向是往上走的，且一般最终会找到的父ctx是emptyCtx，并调用emptyCtx的Value方法返回nil。所以，父节点没法获取子节点存储的值，子节点却可以获取父节点的值。</p>
+<pre><code class="hljs go"><span class="hljs-comment">// 直接打印ctx 出现的.WithValue前缀，就是因为valueCtx重写了stringer接口</span>
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *valueCtx)</span> <span class="hljs-title">String</span><span class="hljs-params">()</span> <span class="hljs-title">string</span></span> &#123;
+	<span class="hljs-keyword">return</span> contextName(c.Context) + <span class="hljs-string">".WithValue(type "</span> +
+		reflectlite.TypeOf(c.key).String() +
+		<span class="hljs-string">", val "</span> + stringify(c.val) + <span class="hljs-string">")"</span>
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *valueCtx)</span> <span class="hljs-title">Value</span><span class="hljs-params">(key any)</span> <span class="hljs-title">any</span></span> &#123;
+        <span class="hljs-comment">// 假如当前 valueCtx 的 key 等于用户传入的 key，则直接返回其 value；</span>
+	<span class="hljs-keyword">if</span> c.key == key &#123;
+		<span class="hljs-keyword">return</span> c.val
+	&#125;
+        <span class="hljs-comment">// 否则从 parent context 中依次向上寻找</span>
+	<span class="hljs-keyword">return</span> value(c.Context, key)
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">value</span><span class="hljs-params">(c Context, key any)</span> <span class="hljs-title">any</span></span> &#123;
+   <span class="hljs-keyword">for</span> &#123;
+      <span class="hljs-keyword">switch</span> ctx := c.(<span class="hljs-keyword">type</span>) &#123;
+      <span class="hljs-comment">// valueCtx 正常递归向上查找</span>
+      <span class="hljs-keyword">case</span> *valueCtx:
+         <span class="hljs-keyword">if</span> key == ctx.key &#123;
+            <span class="hljs-keyword">return</span> ctx.val
+         &#125;
+         c = ctx.Context
+     <span class="hljs-comment">// cancelCtx timerCtx 则需要先判断key是否是cancelCtxKey</span>
+     <span class="hljs-comment">// 用于cancel的内部机制</span>
+      <span class="hljs-keyword">case</span> *cancelCtx:
+         <span class="hljs-keyword">if</span> key == &amp;cancelCtxKey &#123;
+            <span class="hljs-keyword">return</span> c
+         &#125;
+         c = ctx.Context
+      <span class="hljs-keyword">case</span> *timerCtx:
+         <span class="hljs-keyword">if</span> key == &amp;cancelCtxKey &#123;
+            <span class="hljs-keyword">return</span> &amp;ctx.cancelCtx
+         &#125;
+         c = ctx.Context
+      <span class="hljs-keyword">case</span> *emptyCtx:
+         <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+      <span class="hljs-keyword">default</span>:
+         <span class="hljs-keyword">return</span> c.Value(key)
+      &#125;
+   &#125;
+&#125;</code></pre>
+<h3 id="2-4、context-WithCancel-amp-cancelCtx"><a href="#2-4、context-WithCancel-amp-cancelCtx" class="headerlink" title="2.4、context.WithCancel &amp; cancelCtx"></a>2.4、context.WithCancel &amp; cancelCtx</h3><p>withCancel 方法返回了一个cancelCtx 和一个cancel闭包函数</p>
+<pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithCancel</span><span class="hljs-params">(parent Context)</span> <span class="hljs-params">(ctx Context, cancel CancelFunc)</span></span> &#123;
+	<span class="hljs-keyword">if</span> parent == <span class="hljs-literal">nil</span> &#123;
+		<span class="hljs-built_in">panic</span>(<span class="hljs-string">"cannot create context from nil parent"</span>)
+	&#125;
+	c := newCancelCtx(parent)
+	propagateCancel(parent, &amp;c)
+	<span class="hljs-keyword">return</span> &amp;c, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123; c.cancel(<span class="hljs-literal">true</span>, Canceled) &#125;
+&#125;
+
+<span class="hljs-comment">// newCancelCtx returns an initialized cancelCtx.</span>
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">newCancelCtx</span><span class="hljs-params">(parent Context)</span> <span class="hljs-title">cancelCtx</span></span> &#123;
+	<span class="hljs-keyword">return</span> cancelCtx&#123;Context: parent&#125;
+&#125;</code></pre>
+<h4 id="2-4-1、cancelCtx"><a href="#2-4-1、cancelCtx" class="headerlink" title="2.4.1、cancelCtx"></a>2.4.1、cancelCtx</h4><p>先看cancelCtx ，同样继承了Context 接口，并实现了canceler 接口</p>
+<pre><code class="hljs go"><span class="hljs-keyword">type</span> cancelCtx <span class="hljs-keyword">struct</span> &#123;
+    Context
+   
+    mu       sync.Mutex            <span class="hljs-comment">// protects following fields</span>
+    done     atomic.Value          <span class="hljs-comment">// 实际类型为 chan struct&#123;&#125;，即用以反映 cancelCtx 生命周期的通道；</span>
+    children <span class="hljs-keyword">map</span>[canceler]<span class="hljs-keyword">struct</span>&#123;&#125; <span class="hljs-comment">// 指向 cancelCtx 的所有子 context，子ctx只需要实现Done和cancel方法，因此重新定义了canceler接口，方便管理；</span>
+    err      error                 <span class="hljs-comment">// set to non-nil by the first cancel call</span>
+&#125;
+
+<span class="hljs-keyword">type</span> canceler <span class="hljs-keyword">interface</span> &#123;
+    cancel(removeFromParent <span class="hljs-keyword">bool</span>, err error)
+    Done() &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;
+&#125;</code></pre>
+<h4 id="2-4-2、cancelCtx-Done"><a href="#2-4-2、cancelCtx-Done" class="headerlink" title="2.4.2、cancelCtx.Done()"></a>2.4.2、cancelCtx.Done()</h4><p>返回的是无缓冲区只读channel，用于配合select监听该ctx 的取消信号</p>
+<pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *cancelCtx)</span> <span class="hljs-title">Done</span><span class="hljs-params">()</span> &lt;-<span class="hljs-title">chan</span> <span class="hljs-title">struct</span></span>&#123;&#125; &#123;
+    <span class="hljs-comment">//  基于 atomic 包，读取 cancelCtx 中的 chan；倘若已存在，则直接返回；</span>
+    d := c.done.Load()
+    <span class="hljs-keyword">if</span> d != <span class="hljs-literal">nil</span> &#123;
+        <span class="hljs-keyword">return</span> d.(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)
+    &#125; 
+    <span class="hljs-comment">// 上锁</span>
+    c.mu.Lock()
+    <span class="hljs-keyword">defer</span> c.mu.Unlock()
+    <span class="hljs-comment">// 再次判断 chan是否创建（double check）</span>
+    d = c.done.Load()
+    <span class="hljs-keyword">if</span> d == <span class="hljs-literal">nil</span> &#123;
+        <span class="hljs-comment">// 创建并返回chan（懒汉式，只有调用Done方法才会实际创建该channel）</span>
+        d = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)
+        c.done.Store(d)
+    &#125;
+    <span class="hljs-keyword">return</span> d.(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)
+&#125;</code></pre>
+<h4 id="2-4-3、cancelCtx-cancel"><a href="#2-4-3、cancelCtx-cancel" class="headerlink" title="2.4.3、cancelCtx.cancel()"></a>2.4.3、cancelCtx.cancel()</h4><pre><code class="hljs go"><span class="hljs-comment">// closedchan is a reusable closed channel.</span>
+<span class="hljs-keyword">var</span> closedchan = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">init</span><span class="hljs-params">()</span></span> &#123;
+	<span class="hljs-built_in">close</span>(closedchan)
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *cancelCtx)</span> <span class="hljs-title">cancel</span><span class="hljs-params">(removeFromParent <span class="hljs-keyword">bool</span>, err error)</span></span> &#123;
+	<span class="hljs-comment">// 必须要传 err</span>
+        <span class="hljs-keyword">if</span> err == <span class="hljs-literal">nil</span> &#123;
+		<span class="hljs-built_in">panic</span>(<span class="hljs-string">"context: internal error: missing cancel error"</span>)
+	&#125;
+	c.mu.Lock()
+	<span class="hljs-keyword">if</span> c.err != <span class="hljs-literal">nil</span> &#123;
+		c.mu.Unlock()
+		<span class="hljs-keyword">return</span> <span class="hljs-comment">// already canceled</span>
+	&#125;
+	c.err = err
+        <span class="hljs-comment">// 处理 cancelCtx 的 channel，若 channel 此前未初始化，则直接注入一个 closedChan，</span>
+        <span class="hljs-comment">// 否则关闭该 channel；</span>
+	d, _ := c.done.Load().(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)
+	<span class="hljs-keyword">if</span> d == <span class="hljs-literal">nil</span> &#123;
+		c.done.Store(closedchan)
+	&#125; <span class="hljs-keyword">else</span> &#123;
+		<span class="hljs-built_in">close</span>(d)
+	&#125;
+        <span class="hljs-comment">// 循环调用所用子ctx的cancel方法，通知取消</span>
+	<span class="hljs-keyword">for</span> child := <span class="hljs-keyword">range</span> c.children &#123;
+		<span class="hljs-comment">// <span class="hljs-doctag">NOTE:</span> acquiring the child's lock while holding parent's lock.</span>
+		child.cancel(<span class="hljs-literal">false</span>, err)
+	&#125;
+        <span class="hljs-comment">// 移除child ctx</span>
+	c.children = <span class="hljs-literal">nil</span>
+	c.mu.Unlock()
+        <span class="hljs-comment">// 判断是否需要将自身从父ctx的children map中删除</span>
+	<span class="hljs-keyword">if</span> removeFromParent &#123;
+		removeChild(c.Context, c)
+	&#125;
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">removeChild</span><span class="hljs-params">(parent Context, child canceler)</span></span> &#123;
+    <span class="hljs-comment">// 如果 parent 不是 cancelCtx，直接返回（因为只有 cancelCtx 才有 children set） </span>
+    p, ok := parentCancelCtx(parent)
+    <span class="hljs-keyword">if</span> !ok &#123;
+        <span class="hljs-keyword">return</span>
+    &#125;
+    p.mu.Lock()
+    <span class="hljs-keyword">if</span> p.children != <span class="hljs-literal">nil</span> &#123;
+        <span class="hljs-comment">// 从 parent 的 children set 中删除对应 child</span>
+        <span class="hljs-built_in">delete</span>(p.children, child)
+    &#125;
+    p.mu.Unlock()
+&#125;</code></pre>
+<h4 id="2-4-4、WithCancel"><a href="#2-4-4、WithCancel" class="headerlink" title="2.4.4、WithCancel()"></a>2.4.4、WithCancel()</h4><pre><code class="hljs go"><span class="hljs-keyword">var</span> Canceled = errors.New(<span class="hljs-string">"context canceled"</span>)
+
+<span class="hljs-keyword">type</span> CancelFunc <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span>
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithCancel</span><span class="hljs-params">(parent Context)</span> <span class="hljs-params">(ctx Context, cancel CancelFunc)</span></span> &#123;   
+    <span class="hljs-comment">//  校验父 context 非空；</span>
+    <span class="hljs-keyword">if</span> parent == <span class="hljs-literal">nil</span> &#123;
+        <span class="hljs-built_in">panic</span>(<span class="hljs-string">"cannot create context from nil parent"</span>)
+    &#125;
+    <span class="hljs-comment">// 注入父 context 构造好一个新的 cancelCtx；</span>
+    c := newCancelCtx(parent)
+    
+    <span class="hljs-comment">// 在 propagateCancel 方法内启动一个守护协程，以保证父 context 终止时，该 cancelCtx 也会被终止；、</span>
+    <span class="hljs-comment">// 因为父ctx不一定是cancelCtx</span>
+    propagateCancel(parent, &amp;c)
+    
+    <span class="hljs-comment">// 将 cancelCtx 返回，连带返回一个用以终止该 cancelCtx 的闭包函数</span>
+    <span class="hljs-keyword">return</span> &amp;c, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123; c.cancel(<span class="hljs-literal">true</span>, Canceled) &#125;
+&#125;</code></pre>
+<h4 id="2-4-5、propagateCancel"><a href="#2-4-5、propagateCancel" class="headerlink" title="2.4.5、propagateCancel()"></a>2.4.5、propagateCancel()</h4><p>传递父子 context 之间的 cancel 事件</p>
+<pre><code class="hljs go"><span class="hljs-comment">// propagateCancel arranges for child to be canceled when parent is.</span>
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">propagateCancel</span><span class="hljs-params">(parent Context, child canceler)</span></span> &#123;
+	done := parent.Done()
+	<span class="hljs-keyword">if</span> done == <span class="hljs-literal">nil</span> &#123;
+		<span class="hljs-keyword">return</span> <span class="hljs-comment">// parent is never canceled(不可取消类型)</span>
+	&#125;
+
+	<span class="hljs-keyword">select</span> &#123;
+	<span class="hljs-keyword">case</span> &lt;-done: <span class="hljs-comment">// 从parent 的done channel中尝试读数据，如果未取消，goroutine会阻塞在这</span>
+		<span class="hljs-comment">// parent is already canceled</span>
+		child.cancel(<span class="hljs-literal">false</span>, parent.Err())
+		<span class="hljs-keyword">return</span>
+	<span class="hljs-keyword">default</span>:
+	&#125;
+   
+	<span class="hljs-keyword">if</span> p, ok := parentCancelCtx(parent); ok &#123; <span class="hljs-comment">// parentCtx是cancelCtx类型</span>
+		p.mu.Lock()
+		<span class="hljs-keyword">if</span> p.err != <span class="hljs-literal">nil</span> &#123;
+			<span class="hljs-comment">// parent has already been canceled</span>
+			child.cancel(<span class="hljs-literal">false</span>, p.err)
+		&#125; <span class="hljs-keyword">else</span> &#123;
+                        <span class="hljs-comment">// 将自身注册进parent的children中，依靠parent的cancel机制取消</span>
+			<span class="hljs-keyword">if</span> p.children == <span class="hljs-literal">nil</span> &#123;
+				p.children = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[canceler]<span class="hljs-keyword">struct</span>&#123;&#125;)
+			&#125;
+			p.children[child] = <span class="hljs-keyword">struct</span>&#123;&#125;&#123;&#125;
+		&#125;
+		p.mu.Unlock()
+	&#125; <span class="hljs-keyword">else</span> &#123;
+                <span class="hljs-comment">// parent是用户实现的canceler 接口，额外启动一个goroutine去处理该ctx的取消回收</span>
+                <span class="hljs-comment">// 非必要情况避免自己实现canceler，会有额外的goroutine开销</span>
+		atomic.AddInt32(&amp;goroutines, +<span class="hljs-number">1</span>)
+		<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;
+			<span class="hljs-keyword">select</span> &#123;
+			<span class="hljs-keyword">case</span> &lt;-parent.Done(): <span class="hljs-comment">// parent退出，透传parent err 并cancel child</span>
+				child.cancel(<span class="hljs-literal">false</span>, parent.Err())
+			<span class="hljs-keyword">case</span> &lt;-child.Done(): <span class="hljs-comment">// 自身被cancel时，可以退出该goroutine，避免内存泄露</span>
+			&#125;
+		&#125;()
+	&#125;
+&#125;</code></pre>
+<h4 id="2-4-6、parentCancelCtx"><a href="#2-4-6、parentCancelCtx" class="headerlink" title="2.4.6、parentCancelCtx()"></a>2.4.6、parentCancelCtx()</h4><p>向上获取一个最近的cancelCtx</p>
+<pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">parentCancelCtx</span><span class="hljs-params">(parent Context)</span> <span class="hljs-params">(*cancelCtx, <span class="hljs-keyword">bool</span>)</span></span> &#123;
+   done := parent.Done()
+   <span class="hljs-comment">// parent 的 channel 已关闭或者是不会被 cancel 的类型，则返回 false</span>
+   <span class="hljs-keyword">if</span> done == closedchan || done == <span class="hljs-literal">nil</span> &#123;
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">false</span>
+   &#125;
+   
+   <span class="hljs-comment">// 若以特定的 cancelCtxKey 从 parent 中取值，取得的 value 是 parent 本身，则返回 true. </span>
+   <span class="hljs-comment">//（基于 cancelCtxKey 为 key 取值时返回 cancelCtx 自身，是 cancelCtx 特有的协议）</span>
+   <span class="hljs-comment">// 作用是向上追溯到一个最近的cancelCtx，将child添加到它的children map中，</span>
+   <span class="hljs-comment">// 从而少启动一个goroutine协程</span>
+   p, ok := parent.Value(&amp;cancelCtxKey).(*cancelCtx)
+   <span class="hljs-keyword">if</span> !ok &#123;
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">false</span>
+   &#125;
+   pdone, _ := p.done.Load().(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)
+   <span class="hljs-keyword">if</span> pdone != done &#123;
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">false</span>
+   &#125;
+   <span class="hljs-keyword">return</span> p, <span class="hljs-literal">true</span>
+&#125;
+
+<span class="hljs-keyword">var</span> cancelCtxKey <span class="hljs-keyword">int</span>
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *cancelCtx)</span> <span class="hljs-title">Value</span><span class="hljs-params">(key any)</span> <span class="hljs-title">any</span></span> &#123;
+   <span class="hljs-keyword">if</span> key == &amp;cancelCtxKey &#123; <span class="hljs-comment">// cancelCtxKey的指针 可以作为特殊标识符，因为它不会被外部修改</span>
+      <span class="hljs-keyword">return</span> c
+   &#125;
+   <span class="hljs-keyword">return</span> value(c.Context, key)
+&#125;</code></pre>
+<p>关于cancel函数的 removeFromParent参数，分两种情况：</p>
+<p>1、在context包内部 propagateCancel 调用时，传入为false，因为该方法是由parent cancel而发起的，children 只需负责将自身和自身的ctx取消即可，不需要再重复的将自身从parent中的children map中删除，否则会有同时遍历和删除一个 map 的问题</p>
+<p>2、在WithCancel 返回的闭包cancel方法中，传入的是true。因为自身cancel，需要把自己从parent children map中移除（parent还未cancel）</p>
+<h3 id="2-5、timeCtx-amp-context-WithTimeout-amp-context-WithDeadline"><a href="#2-5、timeCtx-amp-context-WithTimeout-amp-context-WithDeadline" class="headerlink" title="2.5、timeCtx &amp; context.WithTimeout &amp; context.WithDeadline"></a>2.5、timeCtx &amp; context.WithTimeout &amp; context.WithDeadline</h3><p>timerCtx 基于 cancelCtx，只是多了一个 time.Timer 和一个 deadline。Timer 会在 deadline 到来时，自动取消 context。</p>
+<pre><code class="hljs go"><span class="hljs-keyword">type</span> timerCtx <span class="hljs-keyword">struct</span> &#123;
+    cancelCtx
+    timer *time.Timer <span class="hljs-comment">// Under cancelCtx.mu.</span>
+    deadline time.Time
+&#125;</code></pre>
+<h4 id="2-5-1、timerCtx-Deadline"><a href="#2-5-1、timerCtx-Deadline" class="headerlink" title="2.5.1、timerCtx.Deadline()"></a>2.5.1、timerCtx.Deadline()</h4><p>仅timerCtx实现了Deadline，返回过期时间</p>
+<pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *timerCtx)</span> <span class="hljs-title">Deadline</span><span class="hljs-params">()</span> <span class="hljs-params">(deadline time.Time, ok <span class="hljs-keyword">bool</span>)</span></span> &#123;
+    <span class="hljs-keyword">return</span> c.deadline, <span class="hljs-literal">true</span>
+&#125;</code></pre>
+<h4 id="2-5-2、timerCtx-cancel"><a href="#2-5-2、timerCtx-cancel" class="headerlink" title="2.5.2、timerCtx.cancel()"></a>2.5.2、timerCtx.cancel()</h4><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *timerCtx)</span> <span class="hljs-title">cancel</span><span class="hljs-params">(removeFromParent <span class="hljs-keyword">bool</span>, err error)</span></span> &#123;
+    <span class="hljs-comment">// 复用继承的 cancelCtx 的 cancel 能力，进行 cancel 处理；</span>
+    c.cancelCtx.cancel(<span class="hljs-literal">false</span>, err)
+    <span class="hljs-keyword">if</span> removeFromParent &#123;
+        <span class="hljs-comment">// 从父节点中删除子节点</span>
+        removeChild(c.cancelCtx.Context, c)
+    &#125;
+    c.mu.Lock()
+    <span class="hljs-keyword">if</span> c.timer != <span class="hljs-literal">nil</span> &#123;
+        <span class="hljs-comment">// 关掉定时器，这样在deadline 到来时，不会再次取消</span>
+        c.timer.Stop()
+        c.timer = <span class="hljs-literal">nil</span>
+    &#125;
+    c.mu.Unlock()
+&#125;</code></pre>
+<h4 id="2-5-3、context-WithTimeout-amp-context-WithDeadline"><a href="#2-5-3、context-WithTimeout-amp-context-WithDeadline" class="headerlink" title="2.5.3、context.WithTimeout &amp; context.WithDeadline"></a>2.5.3、context.WithTimeout &amp; context.WithDeadline</h4><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithTimeout</span><span class="hljs-params">(parent Context, timeout time.Duration)</span> <span class="hljs-params">(Context, CancelFunc)</span></span> &#123;
+    <span class="hljs-keyword">return</span> WithDeadline(parent, time.Now().Add(timeout))
+&#125;
+
+<span class="hljs-comment">// Before reports whether the time instant t is before u.</span>
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(t Time)</span> <span class="hljs-title">Before</span><span class="hljs-params">(u Time)</span> <span class="hljs-title">bool</span></span> &#123;
+	<span class="hljs-keyword">if</span> t.wall&amp;u.wall&amp;hasMonotonic != <span class="hljs-number">0</span> &#123;
+		<span class="hljs-keyword">return</span> t.ext &lt; u.ext
+	&#125;
+	ts := t.sec()
+	us := u.sec()
+	<span class="hljs-keyword">return</span> ts &lt; us || ts == us &amp;&amp; t.nsec() &lt; u.nsec()
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithDeadline</span><span class="hljs-params">(parent Context, d time.Time)</span> <span class="hljs-params">(Context, CancelFunc)</span></span> &#123;
+	<span class="hljs-keyword">if</span> parent == <span class="hljs-literal">nil</span> &#123;
+		<span class="hljs-built_in">panic</span>(<span class="hljs-string">"cannot create context from nil parent"</span>)
+	&#125;
+	<span class="hljs-keyword">if</span> cur, ok := parent.Deadline(); ok &amp;&amp; cur.Before(d) &#123;
+                <span class="hljs-comment">// 如果parent的deadline早于本ctx指定的deadline时间，则直接构造一个cancelCtx</span>
+                <span class="hljs-comment">// 当parent超时时，直接调用cancel取消本ctx，不必在校验本ctx的超时逻辑</span>
+		<span class="hljs-comment">// The current deadline is already sooner than the new one.</span>
+		<span class="hljs-keyword">return</span> WithCancel(parent)
+	&#125;
+	c := &amp;timerCtx&#123;
+		cancelCtx: newCancelCtx(parent),
+		deadline:  d,
+	&#125;
+        <span class="hljs-comment">// 传递cancel事件，并注册进parent的children map</span>
+	propagateCancel(parent, c)
+	dur := time.Until(d)
+	<span class="hljs-keyword">if</span> dur &lt;= <span class="hljs-number">0</span> &#123;
+                <span class="hljs-comment">// 已经到期，取消ctx，err为DeadlineExceeded</span>
+		c.cancel(<span class="hljs-literal">true</span>, DeadlineExceeded) <span class="hljs-comment">// deadline has already passed</span>
+		<span class="hljs-keyword">return</span> c, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123; c.cancel(<span class="hljs-literal">false</span>, Canceled) &#125;
+	&#125;
+	c.mu.Lock()
+	<span class="hljs-keyword">defer</span> c.mu.Unlock()
+	<span class="hljs-keyword">if</span> c.err == <span class="hljs-literal">nil</span> &#123;
+                <span class="hljs-comment">// c.timer 会在 d 时间间隔后，自动调用 cancel 函数，</span>
+                <span class="hljs-comment">// 并且传入的错误就是 DeadlineExceeded：超时错误</span>
+		c.timer = time.AfterFunc(dur, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;
+			c.cancel(<span class="hljs-literal">true</span>, DeadlineExceeded)
+		&#125;)
+	&#125;
+	<span class="hljs-keyword">return</span> c, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123; c.cancel(<span class="hljs-literal">true</span>, Canceled) &#125;
+&#125;</code></pre>
+
+<h2 id="3、例子"><a href="#3、例子" class="headerlink" title="3、例子"></a>3、例子</h2><p>最后举例一个实现一个canceler interface，使上文2.4.5说的propagateCancel 方法进入else分支，创建额外goroutine来处理ctx cancel的情况：</p>
+<p>在propagateCancel else分支处打断点即可</p>
+<pre><code class="hljs go"><span class="hljs-keyword">package</span> context
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">"context"</span>
+	<span class="hljs-string">"sync"</span>
+	<span class="hljs-string">"testing"</span>
+)
+
+<span class="hljs-keyword">type</span> tachiuCancelCtx <span class="hljs-keyword">struct</span> &#123;
+	context.Context               <span class="hljs-comment">// 嵌入内置的 Context 接口</span>
+	done            <span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125; <span class="hljs-comment">// 自定义的 done 通道</span>
+	cancelOnce      sync.Once     <span class="hljs-comment">// 保证取消操作只执行一次的 sync.Once</span>
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(m *tachiuCancelCtx)</span> <span class="hljs-title">Done</span><span class="hljs-params">()</span> &lt;-<span class="hljs-title">chan</span> <span class="hljs-title">struct</span></span>&#123;&#125; &#123;
+	<span class="hljs-keyword">return</span> m.done
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(m *tachiuCancelCtx)</span> <span class="hljs-title">Err</span><span class="hljs-params">()</span> <span class="hljs-title">error</span></span> &#123;
+	<span class="hljs-keyword">select</span> &#123;
+	<span class="hljs-keyword">case</span> &lt;-m.done:
+		<span class="hljs-keyword">return</span> context.Canceled
+	<span class="hljs-keyword">default</span>:
+		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+	&#125;
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(m *tachiuCancelCtx)</span> <span class="hljs-title">Value</span><span class="hljs-params">(key <span class="hljs-keyword">interface</span>&#123;&#125;)</span> <span class="hljs-title">interface</span></span>&#123;&#125; &#123;
+	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(m *tachiuCancelCtx)</span> <span class="hljs-title">cancel</span><span class="hljs-params">()</span></span> &#123;
+	m.cancelOnce.Do(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;
+		<span class="hljs-built_in">close</span>(m.done)
+	&#125;)
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">WithMyCancel</span><span class="hljs-params">(parent context.Context)</span> <span class="hljs-params">(context.Context, context.CancelFunc)</span></span> &#123;
+	ctx := &amp;tachiuCancelCtx&#123;
+		Context: parent,
+		done:    <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;),
+	&#125;
+	<span class="hljs-keyword">return</span> ctx, ctx.cancel
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestContext</span><span class="hljs-params">(t *testing.T)</span></span> &#123;
+	parent := context.Background()
+
+	<span class="hljs-comment">// 使用自定义的 WithMyCancel 函数创建一个新的上下文</span>
+	ctx, _ := WithMyCancel(parent)
+
+	childCtx, _ := context.WithCancel(ctx)
+	t.Log(childCtx)
+&#125;</code></pre>
+
+            </article>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Go/">Go</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Go/">Go</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">本博客所有文章除特别声明外，均采用 <a href="https://zh.wikipedia.org/wiki/Wikipedia:CC_BY-SA_3.0%E5%8D%8F%E8%AE%AE%E6%96%87%E6%9C%AC" target="_blank" rel="nofollow noopener noopener">CC BY-SA 3.0协议</a> 。转载请注明出处！</p>
+              
+              
+                <div class="post-prevnext row">
+                  <div class="post-prev col-6">
+                    
+                    
+                  </div>
+                  <div class="post-next col-6">
+                    
+                    
+                      <a href="/2023/09/19/golang%E5%AF%B9unicode%E7%9A%84%E8%AF%BB%E5%86%99%E6%96%B9%E5%BC%8F/">
+                        <span class="hidden-mobile">golang对unicode的读写方式</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </div>
+                </div>
+              
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div id="tocbot"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+  </main>
+
+  
+    <a id="scroll-top-button" href="#" role="button">
+      <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+    </a>
+  
+
+  
+    <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+
+  
+
+  
+
+  <footer class="mt-5">
+  <div class="text-center py-3">
+    <div>
+      <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a>
+      <i class="iconfont icon-love"></i>
+      <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener">
+        <span>Fluid</span></a>
+    </div>
+    
+
+    
+
+    
+  <span id="timeDate">载入天数...</span>
+  <span id="times">载入时分秒...</span>
+  <script>
+  var now = new Date();
+  function createtime(){
+      var grt= new Date("05/22/2020 00:00:00");//此处修改你的建站时间或者网站上线时间
+      now.setTime(now.getTime()+250);
+      days = (now - grt ) / 1000 / 60 / 60 / 24;
+      dnum = Math.floor(days);
+      hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum);
+      hnum = Math.floor(hours);
+      if(String(hnum).length ==1 ){
+          hnum = "0" + hnum;
+      }
+      minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+      mnum = Math.floor(minutes);
+      if(String(mnum).length ==1 ){
+                mnum = "0" + mnum;
+      }
+      seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+      snum = Math.round(seconds);
+      if(String(snum).length ==1 ){
+                snum = "0" + snum;
+      }
+      document.getElementById("timeDate").innerHTML = "本站勉强安全运行&nbsp"+dnum+"&nbsp天";
+      document.getElementById("times").innerHTML = hnum + "&nbsp小时&nbsp" + mnum + "&nbsp分&nbsp" + snum + "&nbsp秒";
+  }
+  setInterval("createtime()",250);
+  </script>
+</div>
+</footer>
+
+<!-- SCRIPTS -->
+<script  src="https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js" ></script>
+<script  src="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/js/bootstrap.min.js" ></script>
+<script  src="/js/main.js" ></script>
+
+
+  <script  src="/js/lazyload.js" ></script>
+
+
+
+  
+  <script  src="https://cdn.staticfile.org/tocbot/4.11.1/tocbot.min.js" ></script>
+  <script>
+    $(document).ready(function () {
+      var boardCtn = $('#board-ctn');
+      var boardTop = boardCtn.offset().top;
+
+      tocbot.init({
+        tocSelector: '#tocbot',
+        contentSelector: '.post-content',
+        headingSelector: 'h1,h2,h3,h4,h5,h6',
+        linkClass: 'tocbot-link',
+        activeLinkClass: 'tocbot-active-link',
+        listClass: 'tocbot-list',
+        isCollapsedClass: 'tocbot-is-collapsed',
+        collapsibleClass: 'tocbot-is-collapsible',
+        collapseDepth: 0,
+        scrollSmooth: true,
+        headingsOffset: -boardTop
+      });
+      if ($('.toc-list-item').length > 0) {
+        $('#toc').css('visibility', 'visible');
+      }
+    });
+  </script>
+
+
+
+
+
+  <script defer src="https://cdn.staticfile.org/clipboard.js/2.0.6/clipboard.min.js" ></script>
+  <script  src="/js/clipboard-use.js" ></script>
+
+
+
+
+
+
+<!-- Plugins -->
+
+
+  
+
+  
+
+  
+    <!-- Tencent Analytics -->
+    <script defer>
+      var _mtac = {};
+      (function () {
+        var mta = document.createElement("script");
+        mta.src = "//pingjs.qq.com/h5/stats.js?v2.0.4";
+        mta.setAttribute("name", "MTAH5");
+        mta.setAttribute("sid", "500720703");
+        
+        mta.setAttribute("cid", "500720705");
+        
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(mta, s);
+      })();
+    </script>
+  
+
+  
+
+  
+
+  
+
+
+
+  <script  src="https://cdn.staticfile.org/typed.js/2.0.11/typed.min.js" ></script>
+  <script>
+    var typed = new Typed('#subtitle', {
+      strings: [
+        '  ',
+        "go context 的源码走读&nbsp;",
+      ],
+      cursorChar: "_",
+      typeSpeed: 70,
+      loop: false,
+    });
+    typed.stop();
+    $(document).ready(function () {
+      $(".typed-cursor").addClass("h2");
+      typed.start();
+    });
+  </script>
+
+
+
+  <script  src="https://cdn.staticfile.org/anchor-js/4.2.2/anchor.min.js" ></script>
+  <script>
+    anchors.options = {
+      placement: "right",
+      visible: "hover",
+      
+    };
+    var el = "h1,h2,h3,h4,h5,h6".split(",");
+    var res = [];
+    for (item of el) {
+      res.push(".markdown-body > " + item)
+    }
+    anchors.add(res.join(", "))
+  </script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+  <script>
+    var path = "/local-search.xml";
+    var inputArea = document.querySelector("#local-search-input");
+    inputArea.onclick = function () {
+      searchFunc(path, 'local-search-input', 'local-search-result');
+      this.onclick = null
+    }
+  </script>
+
+
+
+  <script  src="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <script>
+    $('#post img:not(.no-zoom img, img[no-zoom]), img[zoom]').each(
+      function () {
+        var element = document.createElement('a');
+        $(element).attr('data-fancybox', 'images');
+        $(element).attr('href', $(this).attr('src'));
+        $(this).wrap(element);
+      }
+    );
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
